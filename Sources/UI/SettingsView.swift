@@ -18,15 +18,15 @@ struct SettingsView: View {
                     }) {
                         HStack {
                             Image(systemName: "star.fill")
-                                .foregroundColor(.orange)
+                                .foregroundColor(.radioAccent)
                             Text("收藏当前频率")
                             Spacer()
                             Text("\(viewModel.state.frequency / 1000) kHz")
                                 .font(.subheadline.monospaced())
-                                .foregroundColor(.orange)
+                                .foregroundColor(.radioAccent)
                             Text(viewModel.state.mode)
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.radioMuted)
                         }
                     }
                     .alert("收藏名称", isPresented: $showAddFavorite) {
@@ -47,10 +47,10 @@ struct SettingsView: View {
                     Section("收藏频道") {
                         HStack {
                             Image(systemName: "tray")
-                                .foregroundColor(.gray)
+                                .foregroundColor(.radioMuted)
                             Text("暂无收藏 — 点击上方添加当前频率")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.radioMuted)
                         }
                     }
                 } else {
@@ -67,12 +67,12 @@ struct SettingsView: View {
                                             .foregroundColor(.white)
                                         Text(ch.freqString)
                                             .font(.caption.monospaced())
-                                            .foregroundColor(.orange)
+                                            .foregroundColor(.radioAccent)
                                     }
                                     Spacer()
                                     Text(ch.mode)
                                         .font(.caption)
-                                        .foregroundColor(.gray)
+                                        .foregroundColor(.radioMuted)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
                                         .background(Color.gray.opacity(0.15))
@@ -99,7 +99,7 @@ struct SettingsView: View {
                 Section("服务器") {
                     HStack {
                         Image(systemName: "network")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.radioMuted)
                         TextField("主机:端口", text: $serverHost)
                             .font(.subheadline.monospaced())
                             .autocapitalization(.none)
@@ -111,7 +111,7 @@ struct SettingsView: View {
                             viewModel.powerOn()
                         }
                     }
-                    .foregroundColor(.orange)
+                    .foregroundColor(.radioAccent)
                     .font(.subheadline)
                 }
 
@@ -131,7 +131,7 @@ struct SettingsView: View {
                 Section("音频") {
                     HStack {
                         Image(systemName: "volume.2")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.radioMuted)
                         Text("AF 增益")
                             .font(.subheadline)
                         Slider(value: Binding(
@@ -142,7 +142,7 @@ struct SettingsView: View {
                     }
                     HStack {
                         Image(systemName: "waveform")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.radioMuted)
                         Text("IQ 采样率")
                             .font(.subheadline)
                         Spacer()
@@ -161,7 +161,7 @@ struct SettingsView: View {
                             }
                         }
                         .pickerStyle(.menu)
-                        .tint(.orange)
+                        .tint(Color.orange)
                     }
                 }
 
@@ -186,7 +186,7 @@ struct SettingsView: View {
                         Spacer()
                         Text("1.0.0")
                             .font(.subheadline.monospaced())
-                            .foregroundColor(.gray)
+                            .foregroundColor(.radioMuted)
                     }
                     HStack {
                         Text("后端")
@@ -194,7 +194,7 @@ struct SettingsView: View {
                         Spacer()
                         Text("sunmrrc / SunSDR2 DX")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.radioMuted)
                     }
                     HStack {
                         Text("延迟")
@@ -202,13 +202,13 @@ struct SettingsView: View {
                         Spacer()
                         Text(viewModel.state.latency)
                             .font(.subheadline.monospaced())
-                            .foregroundColor(.gray)
+                            .foregroundColor(.radioMuted)
                     }
                 }
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-            .background(Color.black)
+            .background(Color.radioBg)
     }
 }
 
@@ -221,7 +221,7 @@ struct StatusLine: View {
         HStack(spacing: 8) {
             Image(systemName: icon)
                 .frame(width: 20)
-                .foregroundColor(.gray)
+                .foregroundColor(.radioMuted)
             Text(label)
                 .font(.subheadline)
             Spacer()

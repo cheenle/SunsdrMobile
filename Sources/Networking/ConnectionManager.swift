@@ -80,6 +80,7 @@ final class ConnectionManager: ObservableObject {
             self?.ctrl.send(text: "getMode:")
             self?.ctrl.send(text: "getPTT:")
             self?.ctrl.send(text: "getWDSPStatus:")
+            self?.ctrl.send(text: "getSampleRate")    // sync IQ sample rate for spectrum
         }
 
         audioRX.onConnected = { [weak self] in
@@ -102,15 +103,12 @@ final class ConnectionManager: ObservableObject {
         ctrl.onDisconnected = { [weak self] _ in self?.ctrlConnected = false }
         ctrl.onError = { [weak self] e in self?.logError("CTRL", e) }
 
-        audioRX.onConnected = { [weak self] in self?.audioRXConnected = true }
         audioRX.onDisconnected = { [weak self] _ in self?.audioRXConnected = false }
         audioRX.onError = { [weak self] e in self?.logError("AudioRX", e) }
 
-        audioTX.onConnected = { [weak self] in self?.audioTXConnected = true }
         audioTX.onDisconnected = { [weak self] _ in self?.audioTXConnected = false }
         audioTX.onError = { [weak self] e in self?.logError("AudioTX", e) }
 
-        spectrum.onConnected = { [weak self] in self?.spectrumConnected = true }
         spectrum.onDisconnected = { [weak self] _ in self?.spectrumConnected = false }
         spectrum.onError = { [weak self] e in self?.logError("Spectrum", e) }
     }

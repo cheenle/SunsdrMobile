@@ -19,9 +19,15 @@ final class RadioState: ObservableObject {
     @Published var signalLevel: Int = 0     // S0–S9+ (0–60+)
     @Published var latency: String = "--ms"
 
+    // ── TX Telemetry ─────────────────────────────────────────────
+    @Published var txPowerWatts: Float = 0.0      // forward power in watts
+    @Published var txSupplyVolts: Float = 0.0     // supply voltage × 10
+    @Published var txTempCelsius: Float = 0.0     // PA temperature °C
+
     // ── Audio gain / squelch ──────────────────────────────────────
     @Published var afGain: Float = 0.5      // 0.0 – 1.0
     @Published var rfGain: Float = 0.5      // 0.0 – 1.0 (radio front-end gain)
+    @Published var micGain: Float = 1.0     // 0.0 – 2.0, default 100%
     @Published var squelch: Float = 0.0     // 0.0 – 1.0
 
     // ── DSP / WDSP ────────────────────────────────────────────────
@@ -46,7 +52,12 @@ final class RadioState: ObservableObject {
     // ── Spectrum data ─────────────────────────────────────
     @Published var spectrumData: Data?
     @Published var waterfallImage: UIImage?   // pre-rendered by SpectrumProcessor
+    @Published var fftData: [Float] = []      // EMA-smoothed spectrum (0..1) for FFTView
     @Published var iqSampleRateHz: Int = 78125  // 39k/78k/156k/312k
+
+    // ── Callbacks ───────────────────────────────────────────
+    /// Called when IQ sample rate changes — consumers reset EMA/accumulation buffers.
+    var onSampleRateChanged: (() -> Void)?
 
     // ── Latency tracking ────────────────────────────────────────
     var lastPingTime: Date = .now
@@ -116,6 +127,7 @@ final class RadioState: ObservableObject {
         case "setSampleRate":
             // Server sends key like "39k", "78k", "156k", "312k"
             iqSampleRateHz = RadioState.sampleRateMapping[val] ?? iqSampleRateHz
+            onSampleRateChanged?()
         case "setWDSPNFEnabled":
             nfEnabled = (val == "true")
         case "setWDSPAGC":
@@ -141,6 +153,27 @@ final class RadioState: ObservableObject {
                let i = notches.firstIndex(where: { $0.index == idx }) {
                 notches[i] = WDSPNotch(index: idx, freqHz: fc, bandwidthHz: fw)
             }
+        case "getTXTelem":
+            // Format: watts,volts,temp_c,raw
+            let parts = val.split(separator: ",")
+            if parts.count >= 3 {
+                txPowerWatts = Float(parts[0]) ?? txPowerWatts
+                txSupplyVolts = Float(parts[1]) ?? txSupplyVolts
+                txTempCelsius = Float(parts[2]) ?? txTempCelsius
+            }
+        case "getSampleRate":
+            iqSampleRateHz = RadioState.sampleRateMapping[val] ?? iqSampleRateHz
+        // ── New server broadcasts (acknowledged but not yet acted on) ──
+        case "setDrive", "setTXDriveGain", "setATT", "setPreamp",
+             "setSpectrumFps", "panfft":
+            break
+        case "setWDSPNR2GainMethod", "setWDSPNR2NpeMethod", "setWDSPNR2AeRun",
+             "setWDSPBandpass", "setWDSPEQ",
+             "setWDSPAGCAttack", "setWDSPAGCDecay", "setWDSPAGCHang",
+             "setWDSPAGCSlope", "setWDSPFMSquelch", "setWDSPFMSquelchThresh":
+            break
+        case "wdspSMeter":
+            break
         default:
             break
         }

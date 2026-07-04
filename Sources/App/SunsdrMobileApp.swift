@@ -1,5 +1,6 @@
 import SwiftUI
 import Security
+import UIKit
 
 @main
 struct SunsdrMobileApp: App {
@@ -13,6 +14,13 @@ struct SunsdrMobileApp: App {
                 ContentView()
                     .environmentObject(vm)
                     .preferredColorScheme(.dark)
+                    .onAppear {
+                        // Keep screen awake while connected to radio
+                        UIApplication.shared.isIdleTimerDisabled = true
+                    }
+                    .onDisappear {
+                        UIApplication.shared.isIdleTimerDisabled = false
+                    }
             } else {
                 LoginView { host, pass in
                     savedHost = host

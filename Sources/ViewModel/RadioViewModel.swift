@@ -12,6 +12,7 @@ final class RadioViewModel: ObservableObject {
     let audioCapture = AudioCaptureManager()
     let favorites = FavoritesManager()
     let spectrumProc = SpectrumProcessor()
+    let fftProc = FFTProcessor()
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Init
@@ -20,10 +21,14 @@ final class RadioViewModel: ObservableObject {
          password: String? = nil) {
         connection = ConnectionManager(serverHost: serverHost, password: password)
         bindSockets()
-        // Relay nested ObservableObject changes so SwiftUI re-renders ContentView
-        state.objectWillChange.sink { [weak self] _ in
-            self?.objectWillChange.send()
-        }.store(in: &cancellables)
+        // Reset FFT EMA buffer on IQ sample rate change
+        state.onSampleRateChanged = { [weak self] in
+            self?.fftProc.reset()
+        }
+        // Re-send setOpus:false if Opus frames detected (server may have reset)
+        NotificationCenter.default.addObserver(forName: .audioOpusDetected, object: nil, queue: .main) { [weak self] _ in
+            self?.connection.sendControl("setOpus:false")
+        }
     }
 
     // MARK: - Public API
@@ -132,18 +137,19 @@ final class RadioViewModel: ObservableObject {
         connection.sendControl("setMode:\(mode)")
     }
 
-    /// Toggle PTT. Starts mic capture on TX, stops on RX.
+    /// Toggle PTT. Starts mic capture on TX, stops on RX. Mutes RX audio during TX.
     func setPTT(_ tx: Bool) {
         state.ptt = tx
         connection.sendControl("setPTT:\(tx ? "true" : "false")")
 
         if tx {
-            // Send safety fallback "s:" via audioTX channel on PTT release (server: force RX)
+            audioPlayback.isMuted = true   // mute RX during TX to prevent feedback
+            connection.audioTX.send(text: "m:16000,pcm,0,20")
             audioCapture.start()
         } else {
             audioCapture.stop()
-            // Safety: send "s:" to ensure server drops PTT even if ctrl message lost
             connection.audioTX.send(text: "s:")
+            audioPlayback.isMuted = false  // unmute RX when back to receive
         }
     }
 
@@ -159,6 +165,12 @@ final class RadioViewModel: ObservableObject {
         state.rfGain = gain
         let val = Int(gain * 100)
         connection.sendControl("setRFGain:\(val)")
+    }
+
+    /// Set Mic gain 0.0–2.0, default 1.0 (100%).
+    func setMicGain(_ gain: Float) {
+        state.micGain = gain
+        audioCapture.micGain = gain
     }
 
     /// Set AGC mode: "off", "slow", "medium", "fast".
@@ -198,9 +210,20 @@ final class RadioViewModel: ObservableObject {
         connection.sendControl("setWDSPNFEnabled:\(on ? "true" : "false")")
     }
 
-    func setWDSPAGCMode(_ mode: Int) {
-        state.agcMode = mode
-        connection.sendControl("setWDSPAGC:\(mode)")
+    func setWDSPAGCMode(_ uiIndex: Int) {
+        // Map UI index to server AGC mode:
+        // UI: 0=关(OFF), 1=慢(SLOW), 2=中(MED), 3=快(FAST)
+        // Server: 0=OFF, 1=LONG, 2=SLOW, 3=MED, 4=FAST
+        let serverMode: Int
+        switch uiIndex {
+        case 0: serverMode = 0  // OFF
+        case 1: serverMode = 2  // SLOW
+        case 2: serverMode = 3  // MED
+        case 3: serverMode = 4  // FAST
+        default: serverMode = 0
+        }
+        state.agcMode = serverMode
+        connection.sendControl("setWDSPAGC:\(serverMode)")
     }
 
     func setIQSampleRate(_ key: String) {
@@ -236,6 +259,27 @@ final class RadioViewModel: ObservableObject {
     }
 
     private func bindSockets() {
+        cancellables.removeAll()
+
+        // Relay nested ObservableObject changes so SwiftUI re-renders ContentView
+        state.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }.store(in: &cancellables)
+
+        // ── Connection status sync ────────────────────────────
+        connection.$ctrlConnected.receive(on: RunLoop.main).sink { [weak self] in
+            self?.state.ctrlConnected = $0
+        }.store(in: &cancellables)
+        connection.$audioRXConnected.receive(on: RunLoop.main).sink { [weak self] in
+            self?.state.audioRXConnected = $0
+        }.store(in: &cancellables)
+        connection.$audioTXConnected.receive(on: RunLoop.main).sink { [weak self] in
+            self?.state.audioTXConnected = $0
+        }.store(in: &cancellables)
+        connection.$spectrumConnected.receive(on: RunLoop.main).sink { [weak self] in
+            self?.state.spectrumConnected = $0
+        }.store(in: &cancellables)
+
         // ── Error forwarding ───────────────────────────────────
         connection.ctrl.onError = { [weak self] err in
             Task { @MainActor [weak self] in
@@ -246,9 +290,7 @@ final class RadioViewModel: ObservableObject {
         // ── Control text messages ──────────────────────────────
         connection.ctrl.onText = { [weak self] text in
             Task { @MainActor [weak self] in
-                guard let self = self else { return }
-                self.state.apply(serverMessage: text)
-                self.state.ctrlConnected = self.connection.ctrlConnected
+                self?.state.apply(serverMessage: text)
             }
         }
 
@@ -262,16 +304,30 @@ final class RadioViewModel: ObservableObject {
             self?.connection.audioTX.send(binary: pcmData)
         }
 
-        // ── Spectrum → SpectrumProcessor (off-main-thread) ──
+        // ── Spectrum → SpectrumProcessor (waterfall) + FFTProcessor (line plot) ──
         var specCount = 0
+        var specLogged = false
         connection.spectrum.onBinary = { [weak self] data in
             specCount += 1
+            if !specLogged && specCount == 10 {
+                specLogged = true
+                print("📊 SPEC: dataSize=\(data.count) vfo=\(self?.state.frequency ?? 0) sr=\(self?.state.iqSampleRateHz ?? 0)")
+                // Print first 8 bytes to verify spectrum data format
+                let bytes = [UInt8](data.prefix(16))
+                print("📊 SPEC: raw[0..15]=\(bytes.map{String($0)}.joined(separator:","))")
+            }
             if specCount % 100 == 0 {
                 print("🌊 Spectrum frames: \(specCount), last=\(data.count) bytes")
             }
-            // Feed to background processor; it calls back on main with final UIImage
+            // Waterfall
             self?.spectrumProc.feed(data: data) { img in
                 self?.state.waterfallImage = img
+            }
+            // FFT line plot — every 3rd frame (~12 fps from 38 fps source)
+            if specCount % 3 == 0 {
+                self?.fftProc.feed(data: data) { smoothed in
+                    self?.state.fftData = smoothed
+                }
             }
         }
     }

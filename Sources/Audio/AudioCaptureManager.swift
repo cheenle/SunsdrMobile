@@ -17,6 +17,7 @@ final class AudioCaptureManager: NSObject, ObservableObject, @unchecked Sendable
     @Published var isCapturing = false
     @Published var txLevel: Float = 0.0    // RMS 0–1
     @Published var captureError: String?
+    var micGain: Float = 1.0               // 0.0–2.0, default 100%
 
     /// Callback with Int16 PCM binary ready to send via WebSocket.
     var onFrame: ((Data) -> Void)?
@@ -115,10 +116,13 @@ final class AudioCaptureManager: NSObject, ObservableObject, @unchecked Sendable
             let frame = Array(accumulator.prefix(frameSize))
             accumulator.removeFirst(frameSize)
 
-            // Convert Float32 → Int16
-            var int16Data = Data(capacity: frameSize * 2)
+            // Build tagged PCM frame: 1-byte codec tag (0x00=PCM) + Int16 payload.
+            // Server uses the first byte to discriminate tagged vs legacy frames.
+            var int16Data = Data(capacity: 1 + frameSize * 2)
+            int16Data.append(0x00)  // AUDIO_TAG_PCM
             for s in frame {
-                let clamped = max(-1.0, min(1.0, s))
+                let gained = s * micGain
+                let clamped = max(-1.0, min(1.0, gained))
                 var sample = Int16(clamped * 32767.0)
                 int16Data.append(withUnsafeBytes(of: &sample) { Data($0) })
             }

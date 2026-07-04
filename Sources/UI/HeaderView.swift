@@ -34,9 +34,15 @@ struct HeaderView: View {
                     .background(Color.orange.opacity(0.2))
                     .cornerRadius(3)
 
-                Text("S\(viewModel.state.signalLevel)")
-                    .font(.caption.monospaced())
-                    .foregroundColor(.green)
+                if viewModel.state.ptt {
+                    Text(String(format: "%.0fW", viewModel.state.txPowerWatts))
+                        .font(.caption.monospaced().bold())
+                        .foregroundColor(.red)
+                } else {
+                    Text("S\(viewModel.state.signalLevel)")
+                        .font(.caption.monospaced())
+                        .foregroundColor(.green)
+                }
 
                 Text(viewModel.state.latency)
                     .font(.caption.monospaced())
