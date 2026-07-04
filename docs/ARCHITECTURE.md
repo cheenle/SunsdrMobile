@@ -4,21 +4,7 @@
 
 SunsdrMobile is a native iOS (SwiftUI) frontend for the SunSDR2 DX amateur radio transceiver. It communicates with the `sunmrrc` Python FastAPI backend over HTTPS/WebSocket, providing full radio control, real-time audio, spectrum waterfall, and DSP management.
 
-```
-┌────────────────────┐       HTTPS/WSS        ┌─────────────────────┐
-│   SunsdrMobile     │ ◄──────────────────► │   sunmrrc Server     │
-│   (iOS App)        │   4 WebSocket links   │   (FastAPI/Python)  │
-│                    │                       │                     │
-│  SwiftUI + Combine │                       │  192.168.16.100     │
-│  AVAudioEngine     │                       │  radio.vlsc.net:8889│
-└────────────────────┘                       └──────────┬──────────┘
-                                                        │ UDP
-                                              ┌──────────▼──────────┐
-                                              │  SunSDR2 DX HW      │
-                                              │  192.168.16.200     │
-                                              │  Port 50001/50002   │
-                                              └─────────────────────┘
-```
+<img src="diagrams/system-context.svg" alt="System Context" width="100%">
 
 ## Data Flow
 
@@ -33,58 +19,17 @@ SunsdrMobile is a native iOS (SwiftUI) frontend for the SunSDR2 DX amateur radio
 
 ### Control Flow
 
-```
-┌──────────────────┐     setFreq:14074000     ┌────────────────┐
-│  RadioViewModel  │ ─────────────────────► │  ConnectionMgr │
-│  (MainActor)     │                         │  /WSCTRX.send  │
-│                  │ ◄─────────────────────  │                │
-│ state.frequency  │     getFreq:14074000     │  onText callbk │
-└──────────────────┘                         └────────────────┘
-```
+<img src="diagrams/control-flow.svg" alt="Control Flow" width="100%">
 
 ### Spectrum Flow (CPU-Optimized)
 
-```
-WebSocket callback (serial bg queue)
-  │
-  ▼
-SpectrumProcessor.feed(data)
-  │ skip every other frame (50% reduction)
-  ▼
-DispatchQueue.global(.userInteractive)
-  │ accumulate 5 frames (Float conversion)
-  │ sort → noise floor → LUT → CGImage
-  │ scroll 100-row pixel buffer
-  ▼
-DispatchQueue.main:
-  state.waterfallImage = UIImage
-  │
-  ▼
-WaterfallView (body: display image + freq labels)
-```
+<img src="diagrams/spectrum-pipeline.svg" alt="Spectrum Pipeline" width="100%">
 
 Key: all heavy computation stays off the main thread. Only the final UIImage crosses to MainActor.
 
 ### Audio Flow
 
-```
-RX:
-  /WSaudioRX binary
-  → AudioPlaybackManager.enqueue(int16Data)
-  → strip 1B codec tag
-  → Int16 LE → Float32 conversion
-  → RMS calculation
-  → AVAudioPCMBuffer → playerNode.scheduleBuffer()
-  → AVAudioEngine output @ 48kHz
-
-TX:
-  Mic → AVAudioEngine input tap (native rate)
-  → downsample 3× (48k→16k)
-  → 320-sample frame accumulation
-  → Float32 → Int16 LE conversion
-  → AudioCaptureManager.onFrame callback
-  → /WSaudioTX.send(binary:)
-```
+<img src="diagrams/audio-flow.svg" alt="Audio Flow" width="100%">
 
 ## Component Model
 

@@ -4,6 +4,8 @@
 
 Control your SunSDR2 DX radio from iPhone with real-time spectrum waterfall, audio playback, DSP processing, and full QSO management — a complete mobile replacement for the web frontend.
 
+🌐 **[Project Website](https://cheenle.github.io/SunsdrMobile/)** — promotional page with feature overview, architecture, and quick-start guide.
+
 ![Platform](https://img.shields.io/badge/platform-iOS%2017%2B-orange)
 ![Language](https://img.shields.io/badge/swift-5.9-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -57,36 +59,9 @@ Control your SunSDR2 DX radio from iPhone with real-time spectrum waterfall, aud
 
 ## Screenshots
 
-```
-┌──────────────────────────────────────────┐
-│ ☰ ●CTRL ●RX ●TX ●FFT  USB  S5  23ms  ⏻ │
-│      [◀]   14.074.000   [▶]             │
-│        [20m▼]         [1K▼]             │
-├──────────────────────────────────────────┤
-│ ████████ S-meter S7                      │
-│ ╔══════════════════════════════════════╗ │
-│ ║          WATERFALL (120pt)          ║ │
-│ ║    deep blue → cyan → yellow → red  ║ │
-│ ╚══════════════════════════════════════╝ │
-│ -30k  -20k  -10k  14.074  +10k  +20k +30k│
-│ 🔊 ═══●══ 45                            │
-│ AF ═══●══  RF ═══●══  SQL ═══●══      │
-│ ──────────────────────────────────────   │
-│    [< USB >]     [< SSB >]              │
-│ ┌──────┐ ┌──────┐ ┌──────┐             │
-│ │ 20m  │ │ 40m  │ │ 15m  │             │
-│ │14.074│ │ 7.074│ │21.074│             │
-│ ├──────┤ ├──────┤ ├──────┤             │
-│ │  --- │ │ 10m  │ │  --- │             │
-│ │---.--│ │28.074│ │---.--│             │
-│ ├──────┤ ├──────┤ ├──────┤             │
-│ │  --- │ │  --- │ │  --- │             │
-│ │---.--│ │---.--│ │---.--│             │
-│ └──────┘ └──────┘ └──────┘             │
-│ ──────────────────────────────────────   │
-│              [  TX  ]                   │
-└──────────────────────────────────────────┘
-```
+<img src="docs/diagrams/screenshot-mockup.svg" alt="SunsdrMobile UI Screenshot" width="360">
+
+
 
 ---
 
@@ -175,25 +150,11 @@ SunsdrMobile/
 
 ### Data Flow
 
-```
-Server (radio.vlsc.net:8889)
-  │
-  ├─ /WSCTRX       (text)   ←→ Control commands
-  ├─ /WSaudioRX    (binary)  ←  RX audio (PCM/Opus)
-  ├─ /WSaudioTX    (binary)   → TX audio (PCM)
-  └─ /WSspectrum   (binary)  ←  512-byte spectrum rows
-```
+<img src="docs/diagrams/data-flow.svg" alt="WebSocket Data Flow" width="360">
 
 ### Spectrum Pipeline (CPU-optimized)
 
-```
-WebSocket → SpectrumProcessor.feed()
-  → frame skip (every other frame)
-  → background queue (.userInteractive)
-  → accumulate 5 frames → sort → LUT → CGImage
-  → DispatchQueue.main → state.waterfallImage
-  → WaterfallView (display only, zero processing)
-```
+<img src="docs/diagrams/spectrum-pipeline.svg" alt="Spectrum Pipeline" width="600">
 
 All heavy computation runs off the main thread. WaterfallView is a pure display view — no `onChange`, no processing logic.
 

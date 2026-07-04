@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SunsdrMobile — Native iOS App for SunSDR2 DX</title>
+<meta name="description" content="Control your SunSDR2 DX amateur radio transceiver from iPhone with real-time spectrum waterfall, audio playback, DSP processing, and full QSO management.">
+<meta name="keywords" content="SunSDR2 DX, iOS, amateur radio, ham radio, SDR, SwiftUI, spectrum waterfall, FT8, SSB">
+<meta property="og:title" content="SunsdrMobile — iOS Radio Control">
+<meta property="og:description" content="Native iOS app for SunSDR2 DX amateur radio transceiver control. Real-time waterfall, audio, DSP.">
+<meta property="og:type" content="website">
+<style>
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:#0a0e14;color:#c8d6e5;line-height:1.7;overflow-x:hidden
+}
+a{color:#5dade2;text-decoration:none}
+img{max-width:100%}
+
+/* ── Nav ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(10,14,20,0.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between
+}
+nav .logo{font-weight:700;font-size:1.25rem;color:#fff;letter-spacing:-0.02em}
+nav .logo span{color:#f39c12}
+nav .links{display:flex;gap:1.75rem;list-style:none;align-items:center}
+nav .links a{color:#8899aa;font-size:0.875rem;font-weight:500;transition:color .2s}
+nav .links a:hover{color:#fff}
+nav .hamburger{display:none;background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer}
+.lang-switch{
+  display:inline-flex;align-items:center;gap:0.3rem;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:0.35rem 0.75rem;color:#8899aa;font-size:0.78rem;
+  font-weight:600;cursor:pointer;transition:all .2s
+}
+.lang-switch:hover{background:rgba(243,156,18,0.12);border-color:#f39c12;color:#f39c12}
+.lang-switch.active{background:rgba(243,156,18,0.18);border-color:#f39c12;color:#f39c12}
+
+/* ── Hero ── */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:6rem 2rem 4rem;
+  background:radial-gradient(ellipse at 50% 30%,rgba(243,156,18,0.08) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 80%,rgba(93,173,226,0.06) 0%,transparent 50%),
+             linear-gradient(180deg,#0a0e14 0%,#10161e 100%);
+}
+.hero-content{max-width:820px}
+.hero .badge{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
+  border-radius:100px;padding:0.4rem 1.2rem;font-size:0.8rem;color:#8899aa;margin-bottom:2rem
+}
+.hero .badge .dot{width:7px;height:7px;border-radius:50%;background:#2ecc71;box-shadow:0 0 8px #2ecc71}
+.hero h1{font-size:3.6rem;font-weight:800;color:#fff;letter-spacing:-0.03em;line-height:1.15;margin-bottom:1rem}
+.hero h1 span{background:linear-gradient(135deg,#f39c12,#e67e22);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero .subtitle{font-size:1.2rem;color:#8899aa;margin-bottom:2.5rem;max-width:600px;margin-left:auto;margin-right:auto}
+.hero .cta-row{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.btn{
+  display:inline-flex;align-items:center;gap:0.5rem;padding:0.75rem 1.75rem;
+  border-radius:10px;font-size:0.95rem;font-weight:600;transition:all .25s;cursor:pointer;border:none
+}
+.btn-primary{background:#f39c12;color:#0a0e14}
+.btn-primary:hover{background:#e67e22;transform:translateY(-1px);box-shadow:0 8px 24px rgba(243,156,18,0.3)}
+.btn-outline{background:transparent;color:#c8d6e5;border:1px solid rgba(255,255,255,0.15)}
+.btn-outline:hover{border-color:#f39c12;color:#f39c12}
+.btn-sm{padding:0.45rem 1rem;font-size:0.8rem}
+
+/* ── Sections ── */
+section{padding:6rem 2rem}
+.section-label{
+  text-transform:uppercase;letter-spacing:0.12em;font-size:0.75rem;font-weight:600;
+  color:#f39c12;margin-bottom:0.75rem
+}
+.section-title{font-size:2.4rem;font-weight:700;color:#fff;margin-bottom:1rem;letter-spacing:-0.02em}
+.section-desc{color:#8899aa;max-width:600px;font-size:1.05rem;margin-bottom:3rem}
+.container{max-width:1100px;margin:0 auto}
+
+/* ── Features Grid ── */
+#features{background:#0d1117}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.feature-card{
+  background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);
+  border-radius:16px;padding:2rem;transition:all .3s
+}
+.feature-card:hover{border-color:rgba(243,156,18,0.25);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.feature-card .icon{
+  width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;margin-bottom:1.25rem
+}
+.icon-waterfall{background:rgba(52,152,219,0.15);color:#3498db}
+.icon-audio{background:rgba(46,204,113,0.15);color:#2ecc71}
+.icon-controls{background:rgba(155,89,182,0.15);color:#9b59b6}
+.icon-dsp{background:rgba(230,126,34,0.15);color:#e67e22}
+.icon-memory{background:rgba(241,196,15,0.15);color:#f1c40f}
+.icon-settings{background:rgba(149,165,166,0.15);color:#95a5a6}
+.feature-card h3{font-size:1.15rem;font-weight:700;color:#fff;margin-bottom:0.6rem}
+.feature-card p{color:#8899aa;font-size:0.92rem}
+.feature-card ul{list-style:none;margin-top:0.75rem}
+.feature-card ul li{color:#8899aa;font-size:0.85rem;padding:0.2rem 0}
+.feature-card ul li::before{content:"▸ ";color:#f39c12;font-size:0.7rem}
+
+/* ── Architecture ── */
+#architecture{background:#0a0e14}
+.arch-diagram{
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);
+  border-radius:20px;padding:2rem 1.5rem;overflow-x:auto;margin-bottom:2rem;text-align:center
+}
+.arch-diagram svg{max-width:100%;height:auto}
+.arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;margin-top:2rem}
+.arch-card{
+  background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);
+  border-radius:14px;padding:1.5rem;text-align:center
+}
+.arch-card .label{
+  display:inline-block;background:rgba(243,156,18,0.15);color:#f39c12;
+  padding:0.2rem 0.8rem;border-radius:6px;font-size:0.7rem;font-weight:600;
+  letter-spacing:0.05em;margin-bottom:0.75rem
+}
+.arch-card .endpoint{font-family:monospace;color:#5dade2;font-weight:600;font-size:1rem}
+.arch-card .dir{color:#8899aa;font-size:0.8rem;margin-top:0.25rem}
+.arch-card .payload{color:#5c6370;font-size:0.78rem;margin-top:0.5rem}
+
+/* ── UI Layout ── */
+#ui{background:#0d1117}
+.ui-showcase{
+  background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);
+  border-radius:20px;padding:2rem 1.5rem;overflow-x:auto;text-align:center
+}
+.ui-showcase svg{max-width:100%;height:auto}
+.screen-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;margin-top:2rem}
+.screen-card{
+  background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);
+  border-radius:14px;padding:1.5rem
+}
+.screen-card h4{color:#fff;font-size:1rem;margin-bottom:0.75rem}
+.screen-card p{color:#8899aa;font-size:0.85rem;margin-bottom:0.5rem}
+.screen-card .comp{display:inline-block;background:rgba(93,173,226,0.1);color:#5dade2;padding:0.15rem 0.5rem;border-radius:4px;font-size:0.72rem;margin:0.15rem;font-family:monospace}
+
+/* ── Performance ── */
+#performance{background:#0a0e14}
+.perf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1.5rem}
+.perf-card{
+  background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);
+  border-radius:14px;padding:1.75rem;text-align:center
+}
+.perf-card .metric{font-size:2.8rem;font-weight:800;color:#f39c12;line-height:1}
+.perf-card .metric-label{color:#8899aa;font-size:0.85rem;margin-top:0.4rem}
+
+/* ── Start ── */
+#start{background:#0d1117}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;counter-reset:step}
+.step{
+  position:relative;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);
+  border-radius:14px;padding:2rem 1.5rem
+}
+.step::before{
+  counter-increment:step;content:counter(step);
+  position:absolute;top:-14px;left:1.5rem;
+  width:32px;height:32px;border-radius:50%;background:#f39c12;color:#0a0e14;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:0.9rem
+}
+.step h4{color:#fff;font-weight:700;font-size:1.05rem;margin:0.5rem 0 0.5rem}
+.step code{display:block;background:rgba(0,0,0,0.3);color:#5dade2;padding:0.6rem 1rem;border-radius:8px;font-size:0.8rem;margin-top:0.75rem;overflow-x:auto}
+.step p{color:#8899aa;font-size:0.85rem}
+
+/* ── Tech Stack ── */
+.tech-stack{display:flex;flex-wrap:wrap;gap:0.6rem;justify-content:center;margin:2rem 0}
+.tech-tag{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:100px;padding:0.4rem 1.1rem;font-size:0.82rem;color:#c8d6e5;transition:all .2s
+}
+.tech-tag:hover{border-color:#f39c12;color:#f39c12}
+
+/* ── Footer ── */
+footer{
+  background:#0a0e14;border-top:1px solid rgba(255,255,255,0.06);
+  padding:3rem 2rem;text-align:center
+}
+footer p{color:#5c6370;font-size:0.82rem}
+footer p a{color:#8899aa}
+footer .built{color:#f39c12;font-size:0.78rem;margin-top:0.75rem}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  nav .links{display:none}
+  nav .hamburger{display:block}
+  .hero h1{font-size:2.2rem}
+  .hero .subtitle{font-size:1rem}
+  .section-title{font-size:1.8rem}
+  section{padding:4rem 1.25rem}
+  .features-grid{grid-template-columns:1fr}
+  .arch-grid{grid-template-columns:1fr}
+  .screen-row{grid-template-columns:1fr}
+  .perf-grid{grid-template-columns:1fr 1fr}
+  .steps{grid-template-columns:1fr}
+}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.animate{animation:fadeUp .7s ease-out both}
+.animate:nth-child(2){animation-delay:.1s}
+.animate:nth-child(3){animation-delay:.2s}
+.animate:nth-child(4){animation-delay:.3s}
+.animate:nth-child(5){animation-delay:.4s}
+.animate:nth-child(6){animation-delay:.5s}
+</style>
+</head>
+<body>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <a href="#" class="logo">Sunsdr<span>Mobile</span></a>
+  <ul class="links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#ui">UI</a></li>
+    <li><a href="#performance">Performance</a></li>
+    <li><a href="#start">Quick Start</a></li>
+    <li><a href="index.html" class="lang-switch" title="切换到中文">🇨🇳 中文</a></li>
+  </ul>
+  <button class="hamburger" onclick="document.querySelector('nav .links').classList.toggle('show')">☰</button>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="badge"><span class="dot"></span> v1.0 — Now Available</div>
+    <h1>Your SunSDR2 DX <span>in Your Pocket</span></h1>
+    <p class="subtitle">
+      Native iOS SwiftUI app for remote control of the SunSDR2 DX transceiver.
+      Real-time spectrum waterfall, low-latency audio, DSP noise reduction, one-touch PTT —
+      a complete replacement for the web frontend.
+    </p>
+    <div class="cta-row">
+      <a href="https://github.com/cheenle/SunsdrMobile" class="btn btn-primary" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+      <a href="#features" class="btn btn-outline">Explore Features ↓</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ═══ -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Complete Transceiver Control</h2>
+    <p class="section-desc">From spectrum waterfall to DSP noise reduction, channel presets to PTT — every feature is thoughtfully designed and optimized for iPhone touch interaction.</p>
+
+    <div class="features-grid">
+      <!-- Spectrum -->
+      <div class="feature-card animate">
+        <div class="icon icon-waterfall">📊</div>
+        <h3>Real-Time Spectrum Waterfall</h3>
+        <p>512-bin FFT real-time spectrum with web-matching colour ramp. Adaptive noise floor with configurable gain/bias contrast stretching.</p>
+        <ul>
+          <li>Dynamic frequency scale (39k/78k/156k/312k IQ bandwidth)</li>
+          <li>Tap-to-tune on waterfall</li>
+          <li>5-frame accumulation + 10fps throttle, zero main-thread overhead</li>
+        </ul>
+      </div>
+
+      <!-- Audio -->
+      <div class="feature-card animate">
+        <div class="icon icon-audio">🎧</div>
+        <h3>Low-Latency Audio</h3>
+        <p>RX: Int16 PCM 48kHz playback via AVAudioPlayerNode. TX: Microphone capture → downsample (48k→16k) → Int16 PCM → WebSocket.</p>
+        <ul>
+          <li>RX 48kHz high-fidelity audio playback</li>
+          <li>TX 16kHz mono capture</li>
+          <li>Real-time RMS level meter</li>
+          <li>One-tap mute</li>
+        </ul>
+      </div>
+
+      <!-- Controls -->
+      <div class="feature-card animate">
+        <div class="icon icon-controls">🎛️</div>
+        <h3>Frequency &amp; Mode Control</h3>
+        <p>Large 56pt monospaced frequency display, step tuning, 12 amateur band presets, six modes: USB/LSB/CW/AM/FM/WFM.</p>
+        <ul>
+          <li>56pt digit frequency display, tap-to-enter in kHz</li>
+          <li>5 step sizes: 1K/5K/10K/50K/100K</li>
+          <li>12 band presets from 160m to 2m</li>
+          <li>CW/SSB/Wide/AM/FM filter presets</li>
+        </ul>
+      </div>
+
+      <!-- DSP -->
+      <div class="feature-card animate">
+        <div class="icon icon-dsp">🔊</div>
+        <h3>DSP Noise Reduction Panel</h3>
+        <p>Complete WDSP digital signal processing control: NR2 noise reduction, NB noise blanker, ANF automatic notch filter, AGC automatic gain control.</p>
+        <ul>
+          <li>NR2 noise reduction + level control + meter</li>
+          <li>NB / ANF / NF independent toggles</li>
+          <li>AGC: Off / Slow / Medium / Fast</li>
+          <li>Manual notch list (add/delete)</li>
+        </ul>
+      </div>
+
+      <!-- Memory -->
+      <div class="feature-card animate">
+        <div class="icon icon-memory">💾</div>
+        <h3>Channel Memory</h3>
+        <p>3×3 grid of frequency presets, always visible. Tap any cell to instantly tune frequency + mode. Empty slots show placeholder, ready for quick-save.</p>
+        <ul>
+          <li>9 channel slots in 3×3 grid layout</li>
+          <li>Persisted via UserDefaults JSON</li>
+          <li>Swipe-to-delete, quick-save</li>
+          <li>One-tap frequency + mode tuning</li>
+        </ul>
+      </div>
+
+      <!-- Settings -->
+      <div class="feature-card animate">
+        <div class="icon icon-settings">⚙️</div>
+        <h3>System Settings</h3>
+        <p>Server host configuration, IQ sample rate selector (39k/78k/156k/312k), Keychain auto-login, connection status diagnostics.</p>
+        <ul>
+          <li>4 IQ sample rate options</li>
+          <li>Keychain secure credential storage</li>
+          <li>4 WebSocket connection status indicators</li>
+          <li>Favorites management with swipe-delete</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ARCHITECTURE ═══ -->
+<section id="architecture">
+  <div class="container">
+    <div class="section-label">Architecture</div>
+    <h2 class="section-title">Precision Engineering</h2>
+    <p class="section-desc">4 WebSocket connections, zero external dependencies, built entirely on Apple frameworks.</p>
+
+    <div class="arch-diagram">
+<svg viewBox="0 0 880 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gBox" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(243,156,18,0.08)"/><stop offset="100%" stop-color="rgba(243,156,18,0.02)"/>
+    </linearGradient>
+    <linearGradient id="gBoxSrv" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(93,173,226,0.08)"/><stop offset="100%" stop-color="rgba(93,173,226,0.02)"/>
+    </linearGradient>
+    <linearGradient id="gBoxHw" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(46,204,113,0.08)"/><stop offset="100%" stop-color="rgba(46,204,113,0.02)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Box 1: iOS App -->
+  <rect x="10" y="15" width="230" height="110" rx="14" fill="url(#gBox)" stroke="rgba(243,156,18,0.35)" stroke-width="1.5"/>
+  <text x="125" y="44" text-anchor="middle" fill="#f39c12" font-size="15" font-weight="700" font-family="inherit">SunsdrMobile</text>
+  <text x="125" y="66" text-anchor="middle" fill="#8899aa" font-size="12" font-family="inherit">iOS App</text>
+  <text x="125" y="88" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">SwiftUI · Combine</text>
+  <text x="125" y="107" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">AVAudioEngine</text>
+
+  <!-- Box 2: Server -->
+  <rect x="460" y="15" width="230" height="110" rx="14" fill="url(#gBoxSrv)" stroke="rgba(93,173,226,0.35)" stroke-width="1.5"/>
+  <text x="575" y="44" text-anchor="middle" fill="#5dade2" font-size="15" font-weight="700" font-family="inherit">sunmrrc Server</text>
+  <text x="575" y="66" text-anchor="middle" fill="#8899aa" font-size="12" font-family="inherit">FastAPI / Python</text>
+  <text x="575" y="88" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">radio.vlsc.net:8889</text>
+  <text x="575" y="107" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">192.168.16.100</text>
+
+  <!-- Box 3: Hardware -->
+  <rect x="710" y="60" width="160" height="70" rx="14" fill="url(#gBoxHw)" stroke="rgba(46,204,113,0.35)" stroke-width="1.5"/>
+  <text x="790" y="84" text-anchor="middle" fill="#2ecc71" font-size="14" font-weight="700" font-family="inherit">SunSDR2 DX</text>
+  <text x="790" y="104" text-anchor="middle" fill="#8899aa" font-size="11" font-family="inherit">192.168.16.200</text>
+  <text x="790" y="120" text-anchor="middle" fill="#5c6370" font-size="10" font-family="inherit">Port 50001/50002</text>
+
+  <!-- Arrow iOS ↔ Server -->
+  <line x1="240" y1="70" x2="460" y2="70" stroke="rgba(243,156,18,0.4)" stroke-width="1.5"/>
+  <polygon points="452,64 466,70 452,76" fill="rgba(243,156,18,0.5)"/>
+  <polygon points="248,64 234,70 248,76" fill="rgba(243,156,18,0.5)"/>
+  <text x="350" y="62" text-anchor="middle" fill="#f39c12" font-size="11" font-weight="600" font-family="inherit">HTTPS / WSS</text>
+  <text x="350" y="82" text-anchor="middle" fill="#8899aa" font-size="10" font-family="inherit">4 WebSocket links</text>
+
+  <!-- Arrow Server → Hardware -->
+  <path d="M 690 70 L 690 95 L 710 95" stroke="rgba(93,173,226,0.35)" stroke-width="1.5" fill="none"/>
+  <polygon points="718,91 710,95 718,99" fill="rgba(93,173,226,0.45)"/>
+  <text x="680" y="135" text-anchor="middle" fill="#5dade2" font-size="10" font-weight="600" font-family="inherit">UDP</text>
+
+  <!-- WebSocket endpoint labels -->
+  <g transform="translate(10,145)">
+    <rect x="0" y="0" width="195" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <text x="8" y="15" fill="#f39c12" font-size="9" font-family="monospace">/WSCTRX</text>
+    <text x="8" y="29" fill="#8899aa" font-size="9" font-family="inherit">Bidirectional · cmd:val</text>
+  </g>
+  <g transform="translate(215,145)">
+    <rect x="0" y="0" width="195" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <text x="8" y="15" fill="#2ecc71" font-size="9" font-family="monospace">/WSaudioRX</text>
+    <text x="8" y="29" fill="#8899aa" font-size="9" font-family="inherit">↓ Binary · PCM/Opus</text>
+  </g>
+  <g transform="translate(430,145)">
+    <rect x="0" y="0" width="195" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <text x="8" y="15" fill="#e67e22" font-size="9" font-family="monospace">/WSaudioTX</text>
+    <text x="8" y="29" fill="#8899aa" font-size="9" font-family="inherit">↑ Binary · PCM</text>
+  </g>
+  <g transform="translate(645,145)">
+    <rect x="0" y="0" width="195" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    <text x="8" y="15" fill="#9b59b6" font-size="9" font-family="monospace">/WSspectrum</text>
+    <text x="8" y="29" fill="#8899aa" font-size="9" font-family="inherit">↓ Binary · 512 uint8</text>
+  </g>
+</svg>
+    </div>
+
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="label">Bidirectional Text</div>
+        <div class="endpoint">/WSCTRX</div>
+        <div class="dir">Bidirectional</div>
+        <div class="payload">cmd:val protocol — freq, mode, PTT, DSP</div>
+      </div>
+      <div class="arch-card">
+        <div class="label">Downstream Binary</div>
+        <div class="endpoint">/WSaudioRX</div>
+        <div class="dir">Server → Client</div>
+        <div class="payload">1B codec tag + Int16 PCM / Opus</div>
+      </div>
+      <div class="arch-card">
+        <div class="label">Upstream Binary</div>
+        <div class="endpoint">/WSaudioTX</div>
+        <div class="dir">Client → Server</div>
+        <div class="payload">Int16 PCM 16kHz mono</div>
+      </div>
+      <div class="arch-card">
+        <div class="label">Downstream Binary</div>
+        <div class="endpoint">/WSspectrum</div>
+        <div class="dir">Server → Client</div>
+        <div class="payload">512 × uint8 dB (0=-120dB, 255=0dB)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ UI LAYOUT ═══ -->
+<section id="ui">
+  <div class="container">
+    <div class="section-label">User Interface</div>
+    <h2 class="section-title">Designed for iPhone Touch</h2>
+    <p class="section-desc">Every pixel carefully laid out — the optimal balance of information density and ease of operation.</p>
+
+    <div class="ui-showcase">
+<svg viewBox="0 0 360 680" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="phoneBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#141b24"/><stop offset="100%" stop-color="#0d1117"/>
+    </linearGradient>
+    <linearGradient id="wfGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1a3a5c"/><stop offset="30%" stop-color="#1a4a3c"/>
+      <stop offset="50%" stop-color="#3a6a2c"/><stop offset="65%" stop-color="#8a7a1c"/>
+      <stop offset="80%" stop-color="#aa5a1c"/><stop offset="100%" stop-color="#8a2a2a"/>
+    </linearGradient>
+    <filter id="phoneShadow"><feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#000" flood-opacity="0.4"/></filter>
+  </defs>
+
+  <!-- Phone frame -->
+  <rect x="15" y="0" width="330" height="680" rx="36" fill="#0a0e14" stroke="rgba(255,255,255,0.1)" stroke-width="2" filter="url(#phoneShadow)"/>
+  <rect x="120" y="8" width="120" height="24" rx="12" fill="#000"/>
+
+  <!-- Status Bar -->
+  <rect x="31" y="44" width="298" height="26" rx="4" fill="rgba(255,255,255,0.03)"/>
+  <text x="45" y="62" fill="#8899aa" font-size="9" font-family="inherit">☰</text>
+  <circle cx="72" cy="57" r="3" fill="#2ecc71"/><text x="80" y="62" fill="#5dade2" font-size="8" font-family="inherit">CTRL</text>
+  <circle cx="112" cy="57" r="3" fill="#2ecc71"/><text x="120" y="62" fill="#5dade2" font-size="8" font-family="inherit">RX</text>
+  <circle cx="143" cy="57" r="3" fill="#2ecc71"/><text x="151" y="62" fill="#5dade2" font-size="8" font-family="inherit">TX</text>
+  <circle cx="174" cy="57" r="3" fill="#2ecc71"/><text x="182" y="62" fill="#5dade2" font-size="8" font-family="inherit">FFT</text>
+  <text x="230" y="62" fill="#8899aa" font-size="9" font-family="inherit" font-weight="600">USB</text>
+  <text x="260" y="62" fill="#8899aa" font-size="9" font-family="inherit">S7</text>
+  <text x="285" y="62" fill="#8899aa" font-size="9" font-family="inherit">23ms</text>
+  <text x="310" y="62" fill="#f39c12" font-size="10" font-family="inherit">⏻</text>
+
+  <!-- Frequency Display -->
+  <rect x="31" y="76" width="298" height="36" rx="4" fill="rgba(255,255,255,0.02)"/>
+  <text x="65" y="100" fill="#5dade2" font-size="16" font-family="inherit">◀</text>
+  <text x="180" y="100" text-anchor="middle" fill="#fff" font-size="22" font-weight="700" font-family="monospace">14.074.000</text>
+  <text x="305" y="100" fill="#5dade2" font-size="16" font-family="inherit">▶</text>
+
+  <!-- Band + Step -->
+  <rect x="31" y="118" width="145" height="26" rx="6" fill="rgba(243,156,18,0.06)" stroke="rgba(243,156,18,0.15)" stroke-width="1"/>
+  <text x="103" y="137" text-anchor="middle" fill="#f39c12" font-size="10" font-family="inherit">20m ▼</text>
+  <rect x="184" y="118" width="145" height="26" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <text x="256" y="137" text-anchor="middle" fill="#8899aa" font-size="10" font-family="inherit">1K ▼</text>
+
+  <line x1="31" y1="152" x2="329" y2="152" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <!-- S-Meter -->
+  <rect x="31" y="158" width="298" height="18" rx="3" fill="rgba(255,255,255,0.02)"/>
+  <rect x="31" y="158" width="190" height="18" rx="3" fill="rgba(46,204,113,0.15)"/>
+  <text x="45" y="171" fill="#2ecc71" font-size="9" font-family="inherit" font-weight="600">S-meter S7</text>
+
+  <!-- Waterfall -->
+  <rect x="31" y="182" width="298" height="120" rx="4" fill="url(#wfGrad)" opacity="0.7"/>
+  <rect x="31" y="182" width="298" height="120" rx="4" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <line x1="80" y1="182" x2="80" y2="302" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+  <line x1="130" y1="182" x2="130" y2="302" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+  <line x1="180" y1="182" x2="180" y2="302" stroke="rgba(255,255,255,0.15)" stroke-width="0.5"/>
+  <line x1="230" y1="182" x2="230" y2="302" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+  <line x1="280" y1="182" x2="280" y2="302" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
+  <text x="50" y="314" fill="#5c6370" font-size="8" font-family="inherit">-30k</text>
+  <text x="100" y="314" fill="#5c6370" font-size="8" font-family="inherit">-20k</text>
+  <text x="145" y="314" fill="#5c6370" font-size="8" font-family="inherit">-10k</text>
+  <text x="168" y="314" fill="#f39c12" font-size="8" font-family="inherit">14.074</text>
+  <text x="218" y="314" fill="#5c6370" font-size="8" font-family="inherit">+10k</text>
+  <text x="268" y="314" fill="#5c6370" font-size="8" font-family="inherit">+20k</text>
+  <text x="310" y="314" fill="#5c6370" font-size="8" font-family="inherit">+30k</text>
+
+  <!-- Audio Level -->
+  <text x="45" y="336" fill="#8899aa" font-size="10" font-family="inherit">🔊</text>
+  <rect x="65" y="328" width="240" height="10" rx="5" fill="rgba(255,255,255,0.05)"/>
+  <rect x="65" y="328" width="140" height="10" rx="5" fill="rgba(46,204,113,0.3)"/>
+  <circle cx="205" cy="333" r="6" fill="#2ecc71"/>
+  <text x="315" y="336" fill="#8899aa" font-size="10" font-family="inherit">45</text>
+
+  <!-- Gain Sliders -->
+  <text x="60" y="360" fill="#8899aa" font-size="9" font-family="inherit">AF</text>
+  <rect x="78" y="354" width="70" height="6" rx="3" fill="rgba(255,255,255,0.05)"/>
+  <rect x="78" y="354" width="42" height="6" rx="3" fill="rgba(93,173,226,0.4)"/>
+  <circle cx="120" cy="357" r="5" fill="#5dade2"/>
+
+  <text x="158" y="360" fill="#8899aa" font-size="9" font-family="inherit">RF</text>
+  <rect x="176" y="354" width="70" height="6" rx="3" fill="rgba(255,255,255,0.05)"/>
+  <rect x="176" y="354" width="50" height="6" rx="3" fill="rgba(155,89,182,0.4)"/>
+  <circle cx="226" cy="357" r="5" fill="#9b59b6"/>
+
+  <text x="256" y="360" fill="#8899aa" font-size="9" font-family="inherit">SQL</text>
+  <rect x="280" y="354" width="49" height="6" rx="3" fill="rgba(255,255,255,0.05)"/>
+  <rect x="280" y="354" width="20" height="6" rx="3" fill="rgba(230,126,34,0.4)"/>
+  <circle cx="300" cy="357" r="5" fill="#e67e22"/>
+
+  <line x1="31" y1="376" x2="329" y2="376" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <!-- Mode + Filter -->
+  <rect x="55" y="385" width="110" height="30" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="75" y="405" fill="#5dade2" font-size="11" font-family="inherit">◀</text>
+  <text x="110" y="405" text-anchor="middle" fill="#f39c12" font-size="12" font-weight="600" font-family="inherit">USB</text>
+  <text x="145" y="405" fill="#5dade2" font-size="11" font-family="inherit">▶</text>
+
+  <rect x="195" y="385" width="110" height="30" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="215" y="405" fill="#5dade2" font-size="11" font-family="inherit">◀</text>
+  <text x="250" y="405" text-anchor="middle" fill="#fff" font-size="12" font-weight="600" font-family="inherit">SSB</text>
+  <text x="285" y="405" fill="#5dade2" font-size="11" font-family="inherit">▶</text>
+
+  <!-- Favorites Grid -->
+  <rect x="31" y="424" width="90" height="44" rx="6" fill="rgba(243,156,18,0.06)" stroke="rgba(243,156,18,0.15)" stroke-width="1"/>
+  <text x="76" y="442" text-anchor="middle" fill="#f39c12" font-size="10" font-weight="600" font-family="inherit">20m</text>
+  <text x="76" y="458" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="monospace">14.074</text>
+
+  <rect x="135" y="424" width="90" height="44" rx="6" fill="rgba(93,173,226,0.06)" stroke="rgba(93,173,226,0.15)" stroke-width="1"/>
+  <text x="180" y="442" text-anchor="middle" fill="#5dade2" font-size="10" font-weight="600" font-family="inherit">40m</text>
+  <text x="180" y="458" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="monospace">7.074</text>
+
+  <rect x="239" y="424" width="90" height="44" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <text x="284" y="448" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
+  <text x="284" y="462" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
+
+  <!-- Row 2 -->
+  <rect x="31" y="474" width="90" height="44" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <text x="76" y="498" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
+  <text x="76" y="512" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
+
+  <rect x="135" y="474" width="90" height="44" rx="6" fill="rgba(46,204,113,0.06)" stroke="rgba(46,204,113,0.15)" stroke-width="1"/>
+  <text x="180" y="498" text-anchor="middle" fill="#2ecc71" font-size="10" font-weight="600" font-family="inherit">10m</text>
+  <text x="180" y="512" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="monospace">28.074</text>
+
+  <rect x="239" y="474" width="90" height="44" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <text x="284" y="498" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
+  <text x="284" y="512" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
+
+  <!-- Row 3 -->
+  <rect x="31" y="524" width="90" height="44" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <text x="76" y="548" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
+  <text x="76" y="562" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
+
+  <rect x="135" y="524" width="90" height="44" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <text x="180" y="548" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
+  <text x="180" y="562" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
+
+  <rect x="239" y="524" width="90" height="44" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+  <text x="284" y="548" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
+  <text x="284" y="562" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
+
+  <line x1="31" y1="578" x2="329" y2="578" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+
+  <!-- PTT Button -->
+  <rect x="115" y="588" width="130" height="52" rx="26" fill="rgba(231,76,60,0.15)" stroke="rgba(231,76,60,0.4)" stroke-width="2"/>
+  <text x="180" y="620" text-anchor="middle" fill="#e74c3c" font-size="18" font-weight="800" font-family="inherit">TX</text>
+
+  <!-- Annotation lines -->
+  <g opacity="0.4">
+    <line x1="345" y1="57" x2="360" y2="57" stroke="#5c6370" stroke-width="0.5"/>
+    <text x="340" y="52" fill="#5c6370" font-size="7" font-family="inherit" text-anchor="end">HeaderView</text>
+    <line x1="345" y1="94" x2="360" y2="94" stroke="#5c6370" stroke-width="0.5"/>
+    <text x="340" y="89" fill="#5c6370" font-size="7" font-family="inherit" text-anchor="end">56pt Display</text>
+    <line x1="345" y1="242" x2="360" y2="242" stroke="#5c6370" stroke-width="0.5"/>
+    <text x="340" y="237" fill="#5c6370" font-size="7" font-family="inherit" text-anchor="end">WaterfallView</text>
+    <line x1="345" y1="500" x2="360" y2="500" stroke="#5c6370" stroke-width="0.5"/>
+    <text x="340" y="495" fill="#5c6370" font-size="7" font-family="inherit" text-anchor="end">3×3 Grid</text>
+    <line x1="345" y1="615" x2="360" y2="615" stroke="#5c6370" stroke-width="0.5"/>
+    <text x="340" y="610" fill="#5c6370" font-size="7" font-family="inherit" text-anchor="end">96pt PTT</text>
+  </g>
+</svg>
+    </div>
+
+    <div class="screen-row">
+      <div class="screen-card">
+        <h4>📡 Main RX Screen</h4>
+        <p>Spectrum waterfall + S-meter + audio level + gain sliders + mode selection + favorites grid + PTT</p>
+        <div>
+          <span class="comp">SMeterView</span><span class="comp">WaterfallView</span>
+          <span class="comp">ModeSelector</span><span class="comp">FavoritesGrid</span>
+          <span class="comp">PTTButton</span><span class="comp">GainSlider</span>
+        </div>
+      </div>
+      <div class="screen-card">
+        <h4>🔊 DSP Panel</h4>
+        <p>WDSP master toggle, NR2 noise reduction (with level meter and intensity slider), NB/ANF/NF toggles, AGC mode selection, manual notch management</p>
+        <div>
+          <span class="comp">NotchChartView</span><span class="comp">NR2 Card</span>
+          <span class="comp">AGC ButtonGroup</span><span class="comp">Notch List</span>
+        </div>
+      </div>
+      <div class="screen-card">
+        <h4>⚙️ Settings</h4>
+        <p>Quick-save, favorites management (swipe-delete), server config + reconnect, connection status diagnostics, IQ sample rate selector</p>
+        <div>
+          <span class="comp">Quick Save</span><span class="comp">Favorites List</span>
+          <span class="comp">Server Config</span><span class="comp">StatusLine</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PERFORMANCE ═══ -->
+<section id="performance">
+  <div class="container">
+    <div class="section-label">Performance</div>
+    <h2 class="section-title">Zero Main-Thread Burden</h2>
+    <p class="section-desc">All heavy computation runs on background threads, ensuring smooth 60fps scrolling.</p>
+
+    <div class="perf-grid">
+      <div class="perf-card">
+        <div class="metric">50%</div>
+        <div class="metric-label">Frame Skip Rate<br><small>Halves dispatch overhead</small></div>
+      </div>
+      <div class="perf-card">
+        <div class="metric">5×</div>
+        <div class="metric-label">Frame Accumulation<br><small>Reduces waterfall processing frequency</small></div>
+      </div>
+      <div class="perf-card">
+        <div class="metric">10fps</div>
+        <div class="metric-label">Waterfall Frame Cap<br><small>UIImage update throttling</small></div>
+      </div>
+      <div class="perf-card">
+        <div class="metric">200KB</div>
+        <div class="metric-label">Waterfall VRAM<br><small>512×100×4 pixel buffer</small></div>
+      </div>
+      <div class="perf-card">
+        <div class="metric">4</div>
+        <div class="metric-label">Concurrent WebSockets<br><small>URLSessionWebSocketTask</small></div>
+      </div>
+      <div class="perf-card">
+        <div class="metric">0</div>
+        <div class="metric-label">Third-Party Dependencies<br><small>Pure Apple frameworks</small></div>
+      </div>
+    </div>
+
+    <h3 style="text-align:center;color:#fff;margin-top:3rem;margin-bottom:1.5rem">Tech Stack</h3>
+    <div class="tech-stack">
+      <span class="tech-tag">Swift 5.9</span>
+      <span class="tech-tag">SwiftUI</span>
+      <span class="tech-tag">Combine</span>
+      <span class="tech-tag">AVFoundation</span>
+      <span class="tech-tag">AVAudioEngine</span>
+      <span class="tech-tag">URLSessionWebSocketTask</span>
+      <span class="tech-tag">CGImage / UIKit</span>
+      <span class="tech-tag">Keychain</span>
+      <span class="tech-tag">UserDefaults</span>
+      <span class="tech-tag">XcodeGen</span>
+      <span class="tech-tag">iOS 17+</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ QUICK START ═══ -->
+<section id="start">
+  <div class="container">
+    <div class="section-label">Quick Start</div>
+    <h2 class="section-title">Up and Running in 5 Minutes</h2>
+    <p class="section-desc">Clone, generate the Xcode project, build, connect — just four steps.</p>
+
+    <div class="steps">
+      <div class="step">
+        <h4>Clone the Repository</h4>
+        <p>Get the latest code from GitHub</p>
+        <code>git clone https://github.com/cheenle/SunsdrMobile.git</code>
+      </div>
+      <div class="step">
+        <h4>Generate Xcode Project</h4>
+        <p>Use XcodeGen to generate .xcodeproj from project.yml</p>
+        <code>cd SunsdrMobile && xcodegen generate</code>
+      </div>
+      <div class="step">
+        <h4>Build &amp; Run</h4>
+        <p>Open the project in Xcode, select your iPhone, and press Cmd+R</p>
+        <code>open SunsdrMobile.xcodeproj</code>
+      </div>
+      <div class="step">
+        <h4>Connect to Your Radio</h4>
+        <p>Enter your server address and password — auto-login via Keychain establishes all 4 WebSocket connections</p>
+        <code>radio.vlsc.net:8889 → Keychain</code>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:3rem">
+      <a href="https://github.com/cheenle/SunsdrMobile" class="btn btn-primary" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ REQUIREMENTS ═══ -->
+<section id="requirements" style="background:#0a0e14">
+  <div class="container" style="text-align:center">
+    <div class="section-label">Requirements</div>
+    <h2 class="section-title" style="margin-bottom:2rem">Runtime Environment</h2>
+    <div class="tech-stack" style="margin-bottom:0">
+      <span class="tech-tag">📱 iOS 17.0+</span>
+      <span class="tech-tag">🛠 Xcode 15.0+</span>
+      <span class="tech-tag">🦅 Swift 5.9</span>
+      <span class="tech-tag">📲 Physical iPhone</span>
+      <span class="tech-tag">🌐 sunmrrc v3.4+</span>
+      <span class="tech-tag">🔐 Self-Signed TLS Cert</span>
+    </div>
+    <p style="color:#5c6370;margin-top:1.5rem;font-size:0.85rem">The simulator lacks full AVAudioEngine microphone support — a physical iPhone device is required</p>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <p>
+    <strong>SunsdrMobile</strong> — Native iOS App for SunSDR2 DX ·
+    <a href="https://github.com/cheenle/SunsdrMobile" target="_blank" rel="noopener">GitHub</a> ·
+    <a href="https://github.com/cheenle/SunsdrMobile/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+  </p>
+  <p style="margin-top:0.5rem">Backend: <a href="https://github.com/cheenle/sunsdrv2" target="_blank" rel="noopener">sunmrrc FastAPI Server</a> · Requires iOS 17+ · Physical Device</p>
+  <p class="built">🤖 Built with Claude Code</p>
+</footer>
+
+<!-- Mobile nav toggle -->
+<style>
+@media(max-width:768px){
+  nav .links.show{display:flex;flex-direction:column;position:absolute;top:56px;left:0;right:0;
+    background:rgba(10,14,20,0.98);padding:1rem 2rem;gap:1rem;border-bottom:1px solid rgba(255,255,255,0.06)}
+}
+</style>
+
+</body>
+</html>
