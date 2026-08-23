@@ -6,89 +6,221 @@
     <meta name="description" content="SunsdrMobile — Native iOS app for SunSDR2 DX amateur radio transceiver control. Real-time spectrum waterfall, low-latency audio, DSP noise reduction.">
     <meta name="keywords" content="SunSDR2 DX, iOS, amateur radio, ham radio, SDR, SwiftUI, spectrum waterfall, FT8, SSB">
     <meta name="author" content="BG1SB">
-    <meta name="theme-color" content="#0a0e14">
+    <meta name="theme-color" content="#050a08">
 
     <title>SunsdrMobile — Native iOS App for SunSDR2 DX</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="css/octen.css?v=2">
-    <link rel="stylesheet" href="css/sunsdrmobile.css">
+    <link rel="stylesheet" href="css/scope.css?v=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23f39c12' width='100' height='100' rx='20'/><text y='.9em' x='50%' text-anchor='middle' font-size='60'>📱</text></svg>">
-</head>
-<body data-site="sunsdrmobile">
+    <style>
+      .scope-hero {
+        position: relative;
+        padding: calc(var(--scope-gn-h) + var(--scope-nav-h) + 5rem) 0 6rem;
+        background:
+          radial-gradient(circle at 70% 30%, rgba(0, 255, 65, 0.08), transparent 40%),
+          var(--scope-bg);
+        overflow: hidden;
+      }
+      .scope-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mask-image: radial-gradient(circle at 50% 0%, black 0%, transparent 70%);
+        -webkit-mask-image: radial-gradient(circle at 50% 0%, black 0%, transparent 70%);
+      }
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--scope-font-mono);
+        font-size: 0.8rem;
+        color: var(--scope-primary);
+        border: 1px solid var(--scope-border);
+        border-radius: 999px;
+        padding: 0.35rem 0.85rem;
+        margin-bottom: 1.25rem;
+        background: rgba(0, 255, 65, 0.05);
+      }
+      .features-grid,
+      .arch-grid,
+      .screen-row,
+      .perf-grid,
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.25rem;
+      }
+      .feature-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--scope-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        background: rgba(0, 255, 65, 0.08);
+        color: var(--scope-primary);
+        border: 1px solid var(--scope-border);
+      }
+      .scope-card h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--scope-text); }
+      .scope-card p { color: var(--scope-text-2); font-size: 0.9rem; margin: 0 0 0.75rem; }
+      .scope-card ul { margin: 0; padding-left: 1.1rem; color: var(--scope-text-2); font-size: 0.85rem; }
+      .scope-card ul li { margin-bottom: 0.25rem; }
+      .arch-diagram { margin: 2rem 0; }
+      .arch-card .label { font-family: var(--scope-font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--scope-text-muted); margin-bottom: 0.35rem; }
+      .arch-card .endpoint { font-family: var(--scope-font-mono); color: var(--scope-primary); font-weight: 600; margin-bottom: 0.25rem; }
+      .arch-card .dir { font-size: 0.8rem; color: var(--scope-text-2); margin-bottom: 0.5rem; }
+      .arch-card .payload { font-size: 0.85rem; color: var(--scope-text-muted); }
+      .ui-showcase { text-align: center; margin: 2rem 0; }
+      .ui-showcase svg { max-width: 360px; width: 100%; height: auto; }
+      .perf-card { text-align: center; }
+      .perf-card .metric { font-family: var(--scope-font-mono); font-size: 2.5rem; font-weight: 700; color: var(--scope-primary); }
+      .perf-card .metric-label { color: var(--scope-text-2); font-size: 0.9rem; }
+      .step { counter-increment: step; }
+      .step h4::before { content: counter(step) '. '; color: var(--scope-primary); font-family: var(--scope-font-mono); }
+      .step code {
+        display: block;
+        margin-top: 0.75rem;
+        font-family: var(--scope-font-mono);
+        font-size: 0.8rem;
+        background: var(--scope-surface-2);
+        border: 1px solid var(--scope-border);
+        border-radius: var(--scope-radius);
+        padding: 0.6rem 0.8rem;
+        color: var(--scope-text-2);
+      }
+      .tech-stack {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.6rem;
+      }
+      .tech-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-family: var(--scope-font-mono);
+        font-size: 0.78rem;
+        color: var(--scope-text-2);
+        background: var(--scope-surface);
+        border: 1px solid var(--scope-border);
+        border-radius: 999px;
+        padding: 0.4rem 0.85rem;
+      }
+      .qr-card {
+        display: inline-block;
+        background: #ffffff;
+        padding: 1.25rem;
+        border-radius: 12px;
+        max-width: 280px;
+        width: 100%;
+      }
+      .qr-card img { width: 100%; height: auto; display: block; border-radius: 6px; }
+      .scope-footer {
+        background: var(--scope-surface);
+        border-top: 1px solid var(--scope-border);
+        padding: 3rem 0 1.5rem;
+      }
+      .scope-footer-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+      .scope-footer h4 { margin: 0 0 0.75rem; font-family: var(--scope-font-mono); font-size: 0.95rem; color: var(--scope-text); }
+      .scope-footer ul { list-style: none; margin: 0; padding: 0; }
+      .scope-footer li { margin-bottom: 0.4rem; }
+      .scope-footer a { color: var(--scope-text-2); font-size: 0.9rem; }
+      .scope-footer a:hover { color: var(--scope-primary); }
+      .scope-footer p { color: var(--scope-text-muted); font-size: 0.9rem; margin: 0; }
+      .scope-footer-bottom {
+        border-top: 1px solid var(--scope-border);
+        padding-top: 1.25rem;
+        text-align: center;
+        color: var(--scope-text-muted);
+        font-size: 0.85rem;
+      }
+      @media (max-width: 768px) {
+        .scope-hero { padding: calc(var(--scope-gn-h) + var(--scope-nav-h) + 3rem) 0 4rem; }
+      }
+    </style>
 
-<!-- Navigation -->
-<nav class="navbar">
-    <div class="container navbar-content">
-        <a href="#" class="logo">
-            <span class="logo-icon"><i class="fas fa-mobile-alt"></i></span>
-            <span>Sunsdr<span style="color: var(--accent);">Mobile</span></span>
-        </a>
-        <ul class="nav-links">
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%2300ff41' width='100' height='100' rx='20'/><text y='.9em' x='50%' text-anchor='middle' font-size='60'>📱</text></svg>">
+</head>
+<body data-site="sunsdrmobile" class="fx-grid">
+
+<nav class="scope-site-nav">
+    <div class="container scope-site-nav-inner">
+        <a href="#" class="scope-site-brand fx-glow">SunsdrMobile</a>
+        <ul class="scope-site-nav-links">
             <li><a href="#features">Features</a></li>
             <li><a href="#architecture">Architecture</a></li>
             <li><a href="#ui">UI</a></li>
             <li><a href="#performance">Performance</a></li>
             <li><a href="#start">Quick Start</a></li>
-            <li><a href="https://github.com/cheenle/SunsdrMobile" target="_blank" rel="noopener">
-                <i class="fab fa-github"></i> GitHub
-            </a></li>
+            <li><a href="/mrrc_modern/">Modern</a></li>
+            <li><a href="https://github.com/cheenle/SunsdrMobile" target="_blank" rel="noopener"><i class="fab fa-github"></i></a></li>
         </ul>
-        <div class="nav-actions">
-            <a href="zh/index.html" class="lang-btn">中文</a>
-            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()"><i class="fas fa-bars"></i></button>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <a href="zh/index.html" class="scope-btn" style="padding:0.4rem 0.8rem;font-size:0.75rem;">中文</a>
+            <button class="scope-site-nav-toggle" aria-label="Toggle menu"><i class="fas fa-bars"></i></button>
         </div>
     </div>
 </nav>
 
-<!-- Hero -->
-<section class="hero">
-    <div class="hero-content">
-        <div class="hero-badge">
-            <i class="fas fa-check-circle"></i>
-            <span>v1.0 · Now Available</span>
-        </div>
-        <h1 class="hero-title">
-            Your SunSDR2 DX<br>
-            <span class="gradient">in Your Pocket</span>
+<section class="scope-hero">
+    <div class="container" style="position:relative;z-index:1;">
+        <div class="hero-badge"><i class="fas fa-check-circle"></i><span>v1.0 · Now Available</span></div>
+        <h1 class="fx-glow" style="font-family:var(--scope-font-mono);font-size:clamp(2.2rem,6vw,4rem);font-weight:700;margin:0 0 1rem;line-height:1.1;">
+            Your SunSDR2 DX<br>in Your Pocket
         </h1>
-        <p class="hero-subtitle">
+        <p style="color:var(--scope-text-2);font-size:1.15rem;max-width:640px;margin:0 0 2rem;">
             Native iOS SwiftUI app for remote control of the SunSDR2 DX transceiver.
             Real-time spectrum waterfall, low-latency audio, DSP noise reduction, one-touch PTT —
             a complete replacement for the web frontend.
         </p>
-        <div class="hero-actions">
-            <a href="https://github.com/cheenle/SunsdrMobile" class="btn btn-primary btn-large" target="_blank" rel="noopener">
-                <i class="fab fa-github"></i> GitHub
-            </a>
-            <a href="#features" class="btn btn-secondary btn-large">
-                <i class="fas fa-arrow-down"></i> Explore Features
-            </a>
+        <div style="display:flex;flex-wrap:wrap;gap:1rem;">
+            <a href="https://github.com/cheenle/SunsdrMobile" class="scope-btn scope-btn-primary" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
+            <a href="#features" class="scope-btn"><i class="fas fa-arrow-down"></i> Explore Features</a>
+            <a href="#community" class="scope-btn"><i class="fas fa-qrcode"></i> Join WeChat Group</a>
         </div>
     </div>
 </section>
 
-<!-- Features -->
-<section class="section" id="features" style="background: var(--bg-secondary);">
+<section class="scope-section" id="community" style="text-align:center;">
     <div class="container">
-        <div class="section-header">
-            <span class="section-label">Features</span>
-            <h2 class="section-title">Complete Transceiver Control</h2>
-            <p class="section-subtitle">From spectrum waterfall to DSP noise reduction, channel presets to PTT — every feature is thoughtfully designed and optimized for iPhone touch interaction.</p>
+        <div class="section-label">Community</div>
+        <h2 class="section-title">Join the Conversation</h2>
+        <p class="section-subtitle" style="margin-left:auto;margin-right:auto;">Scan the QR code with WeChat to join the MRRC-HAM group.</p>
+        <div class="qr-card scope-card" style="padding:1.25rem;">
+            <img src="images/qr-wechat-group.jpg" alt="WeChat QR code for MRRC-HAM group">
         </div>
+        <p style="color:var(--scope-text-muted);font-size:0.85rem;margin-top:1rem;">QR code valid until Aug 29, 2026. Will be updated when refreshed.</p>
+    </div>
+</section>
+
+<section class="scope-section scope-section-alt" id="features">
+    <div class="container">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Complete Transceiver Control</h2>
+        <p class="section-subtitle">From spectrum waterfall to DSP noise reduction, channel presets to PTT — every feature is thoughtfully designed and optimized for iPhone touch interaction.</p>
 
         <div class="features-grid">
-            <!-- Spectrum -->
-            <div class="feature-card animate">
-                <div class="icon icon-waterfall"><i class="fas fa-chart-bar"></i></div>
+            <div class="scope-card scope-reveal">
+                <div class="feature-icon"><i class="fas fa-chart-bar"></i></div>
                 <h3>Real-Time Spectrum Waterfall</h3>
                 <p>512-bin FFT real-time spectrum with web-matching colour ramp. Adaptive noise floor with configurable gain/bias contrast stretching.</p>
                 <ul>
@@ -98,9 +230,8 @@
                 </ul>
             </div>
 
-            <!-- Audio -->
-            <div class="feature-card animate">
-                <div class="icon icon-audio"><i class="fas fa-headphones"></i></div>
+            <div class="scope-card scope-reveal">
+                <div class="feature-icon"><i class="fas fa-headphones"></i></div>
                 <h3>Low-Latency Audio</h3>
                 <p>RX: Int16 PCM 48kHz playback via AVAudioPlayerNode. TX: Microphone capture → downsample (48k→16k) → Int16 PCM → WebSocket.</p>
                 <ul>
@@ -111,9 +242,8 @@
                 </ul>
             </div>
 
-            <!-- Controls -->
-            <div class="feature-card animate">
-                <div class="icon icon-controls"><i class="fas fa-sliders-h"></i></div>
+            <div class="scope-card scope-reveal">
+                <div class="feature-icon"><i class="fas fa-sliders-h"></i></div>
                 <h3>Frequency &amp; Mode Control</h3>
                 <p>Large 56pt monospaced frequency display, step tuning, 12 amateur band presets, six modes: USB/LSB/CW/AM/FM/WFM.</p>
                 <ul>
@@ -124,9 +254,8 @@
                 </ul>
             </div>
 
-            <!-- DSP -->
-            <div class="feature-card animate">
-                <div class="icon icon-dsp"><i class="fas fa-wave-square"></i></div>
+            <div class="scope-card scope-reveal">
+                <div class="feature-icon"><i class="fas fa-wave-square"></i></div>
                 <h3>DSP Noise Reduction Panel</h3>
                 <p>Complete WDSP digital signal processing control: NR2 noise reduction, NB noise blanker, ANF automatic notch filter, AGC automatic gain control.</p>
                 <ul>
@@ -137,9 +266,8 @@
                 </ul>
             </div>
 
-            <!-- Memory -->
-            <div class="feature-card animate">
-                <div class="icon icon-memory"><i class="fas fa-save"></i></div>
+            <div class="scope-card scope-reveal">
+                <div class="feature-icon"><i class="fas fa-save"></i></div>
                 <h3>Channel Memory</h3>
                 <p>3×3 grid of frequency presets, always visible. Tap any cell to instantly tune frequency + mode. Empty slots show placeholder, ready for quick-save.</p>
                 <ul>
@@ -150,9 +278,8 @@
                 </ul>
             </div>
 
-            <!-- Settings -->
-            <div class="feature-card animate">
-                <div class="icon icon-settings"><i class="fas fa-cog"></i></div>
+            <div class="scope-card scope-reveal">
+                <div class="feature-icon"><i class="fas fa-cog"></i></div>
                 <h3>System Settings</h3>
                 <p>Server host configuration, IQ sample rate selector (39k/78k/156k/312k), Keychain auto-login, connection status diagnostics.</p>
                 <ul>
@@ -166,14 +293,11 @@
     </div>
 </section>
 
-<!-- Architecture -->
-<section class="section" id="architecture" style="background: var(--bg-primary);">
+<section class="scope-section" id="architecture">
     <div class="container">
-        <div class="section-header">
-            <span class="section-label">Architecture</span>
-            <h2 class="section-title">Precision Engineering</h2>
-            <p class="section-subtitle">4 WebSocket connections, zero external dependencies, built entirely on Apple frameworks.</p>
-        </div>
+        <div class="section-label">Architecture</div>
+        <h2 class="section-title">Precision Engineering</h2>
+        <p class="section-subtitle">4 WebSocket connections, zero external dependencies, built entirely on Apple frameworks.</p>
 
         <div class="arch-diagram">
 <svg viewBox="0 0 880 200" xmlns="http://www.w3.org/2000/svg">
@@ -189,39 +313,33 @@
     </linearGradient>
   </defs>
 
-  <!-- Box 1: iOS App -->
   <rect x="10" y="15" width="230" height="110" rx="14" fill="url(#gBox)" stroke="rgba(243,156,18,0.35)" stroke-width="1.5"/>
   <text x="125" y="44" text-anchor="middle" fill="#f39c12" font-size="15" font-weight="700" font-family="inherit">SunsdrMobile</text>
   <text x="125" y="66" text-anchor="middle" fill="#8899aa" font-size="12" font-family="inherit">iOS App</text>
   <text x="125" y="88" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">SwiftUI · Combine</text>
   <text x="125" y="107" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">AVAudioEngine</text>
 
-  <!-- Box 2: Server -->
   <rect x="460" y="15" width="230" height="110" rx="14" fill="url(#gBoxSrv)" stroke="rgba(93,173,226,0.35)" stroke-width="1.5"/>
   <text x="575" y="44" text-anchor="middle" fill="#5dade2" font-size="15" font-weight="700" font-family="inherit">sunmrrc Server</text>
   <text x="575" y="66" text-anchor="middle" fill="#8899aa" font-size="12" font-family="inherit">FastAPI / Python</text>
   <text x="575" y="88" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">radio.vlsc.net:8889</text>
   <text x="575" y="107" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">192.168.16.100</text>
 
-  <!-- Box 3: Hardware -->
   <rect x="710" y="60" width="160" height="70" rx="14" fill="url(#gBoxHw)" stroke="rgba(46,204,113,0.35)" stroke-width="1.5"/>
   <text x="790" y="84" text-anchor="middle" fill="#2ecc71" font-size="14" font-weight="700" font-family="inherit">SunSDR2 DX</text>
   <text x="790" y="104" text-anchor="middle" fill="#8899aa" font-size="11" font-family="inherit">192.168.16.200</text>
   <text x="790" y="120" text-anchor="middle" fill="#5c6370" font-size="10" font-family="inherit">Port 50001/50002</text>
 
-  <!-- Arrow iOS ↔ Server -->
   <line x1="240" y1="70" x2="460" y2="70" stroke="rgba(243,156,18,0.4)" stroke-width="1.5"/>
   <polygon points="452,64 466,70 452,76" fill="rgba(243,156,18,0.5)"/>
   <polygon points="248,64 234,70 248,76" fill="rgba(243,156,18,0.5)"/>
   <text x="350" y="62" text-anchor="middle" fill="#f39c12" font-size="11" font-weight="600" font-family="inherit">HTTPS / WSS</text>
   <text x="350" y="82" text-anchor="middle" fill="#8899aa" font-size="10" font-family="inherit">4 WebSocket links</text>
 
-  <!-- Arrow Server → Hardware -->
   <path d="M 690 70 L 690 95 L 710 95" stroke="rgba(93,173,226,0.35)" stroke-width="1.5" fill="none"/>
   <polygon points="718,91 710,95 718,99" fill="rgba(93,173,226,0.45)"/>
   <text x="680" y="135" text-anchor="middle" fill="#5dade2" font-size="10" font-weight="600" font-family="inherit">UDP</text>
 
-  <!-- WebSocket endpoint labels -->
   <g transform="translate(10,145)">
     <rect x="0" y="0" width="195" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
     <text x="8" y="15" fill="#f39c12" font-size="9" font-family="monospace">/WSCTRX</text>
@@ -246,25 +364,25 @@
         </div>
 
         <div class="arch-grid">
-            <div class="arch-card">
+            <div class="scope-card scope-reveal">
                 <div class="label">Bidirectional Text</div>
                 <div class="endpoint">/WSCTRX</div>
                 <div class="dir">Bidirectional</div>
                 <div class="payload">cmd:val protocol — freq, mode, PTT, DSP</div>
             </div>
-            <div class="arch-card">
+            <div class="scope-card scope-reveal">
                 <div class="label">Downstream Binary</div>
                 <div class="endpoint">/WSaudioRX</div>
                 <div class="dir">Server → Client</div>
                 <div class="payload">1B codec tag + Int16 PCM / Opus</div>
             </div>
-            <div class="arch-card">
+            <div class="scope-card scope-reveal">
                 <div class="label">Upstream Binary</div>
                 <div class="endpoint">/WSaudioTX</div>
                 <div class="dir">Client → Server</div>
                 <div class="payload">Int16 PCM 16kHz mono</div>
             </div>
-            <div class="arch-card">
+            <div class="scope-card scope-reveal">
                 <div class="label">Downstream Binary</div>
                 <div class="endpoint">/WSspectrum</div>
                 <div class="dir">Server → Client</div>
@@ -274,14 +392,11 @@
     </div>
 </section>
 
-<!-- UI Layout -->
-<section class="section" id="ui" style="background: var(--bg-secondary);">
+<section class="scope-section scope-section-alt" id="ui">
     <div class="container">
-        <div class="section-header">
-            <span class="section-label">User Interface</span>
-            <h2 class="section-title">Designed for iPhone Touch</h2>
-            <p class="section-subtitle">Every pixel carefully laid out — the optimal balance of information density and ease of operation.</p>
-        </div>
+        <div class="section-label">User Interface</div>
+        <h2 class="section-title">Designed for iPhone Touch</h2>
+        <p class="section-subtitle">Every pixel carefully laid out — the optimal balance of information density and ease of operation.</p>
 
         <div class="ui-showcase">
 <svg viewBox="0 0 360 680" xmlns="http://www.w3.org/2000/svg">
@@ -297,11 +412,9 @@
     <filter id="phoneShadow"><feDropShadow dx="0" dy="4" stdDeviation="12" flood-color="#000" flood-opacity="0.4"/></filter>
   </defs>
 
-  <!-- Phone frame -->
   <rect x="15" y="0" width="330" height="680" rx="36" fill="#0a0e14" stroke="rgba(255,255,255,0.1)" stroke-width="2" filter="url(#phoneShadow)"/>
   <rect x="120" y="8" width="120" height="24" rx="12" fill="#000"/>
 
-  <!-- Status Bar -->
   <rect x="31" y="44" width="298" height="26" rx="4" fill="rgba(255,255,255,0.03)"/>
   <text x="45" y="62" fill="#8899aa" font-size="9" font-family="inherit">☰</text>
   <circle cx="72" cy="57" r="3" fill="#2ecc71"/><text x="80" y="62" fill="#5dade2" font-size="8" font-family="inherit">CTRL</text>
@@ -313,13 +426,11 @@
   <text x="285" y="62" fill="#8899aa" font-size="9" font-family="inherit">23ms</text>
   <text x="310" y="62" fill="#f39c12" font-size="10" font-family="inherit">⏻</text>
 
-  <!-- Frequency Display -->
   <rect x="31" y="76" width="298" height="36" rx="4" fill="rgba(255,255,255,0.02)"/>
   <text x="65" y="100" fill="#5dade2" font-size="16" font-family="inherit">◀</text>
   <text x="180" y="100" text-anchor="middle" fill="#fff" font-size="22" font-weight="700" font-family="monospace">14.074.000</text>
   <text x="305" y="100" fill="#5dade2" font-size="16" font-family="inherit">▶</text>
 
-  <!-- Band + Step -->
   <rect x="31" y="118" width="145" height="26" rx="6" fill="rgba(243,156,18,0.06)" stroke="rgba(243,156,18,0.15)" stroke-width="1"/>
   <text x="103" y="137" text-anchor="middle" fill="#f39c12" font-size="10" font-family="inherit">20m ▼</text>
   <rect x="184" y="118" width="145" height="26" rx="6" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
@@ -327,12 +438,10 @@
 
   <line x1="31" y1="152" x2="329" y2="152" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
 
-  <!-- S-Meter -->
   <rect x="31" y="158" width="298" height="18" rx="3" fill="rgba(255,255,255,0.02)"/>
   <rect x="31" y="158" width="190" height="18" rx="3" fill="rgba(46,204,113,0.15)"/>
   <text x="45" y="171" fill="#2ecc71" font-size="9" font-family="inherit" font-weight="600">S-meter S7</text>
 
-  <!-- Waterfall -->
   <rect x="31" y="182" width="298" height="120" rx="4" fill="url(#wfGrad)" opacity="0.7"/>
   <rect x="31" y="182" width="298" height="120" rx="4" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
   <line x1="80" y1="182" x2="80" y2="302" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/>
@@ -348,14 +457,12 @@
   <text x="268" y="314" fill="#5c6370" font-size="8" font-family="inherit">+20k</text>
   <text x="310" y="314" fill="#5c6370" font-size="8" font-family="inherit">+30k</text>
 
-  <!-- Audio Level -->
   <text x="45" y="336" fill="#8899aa" font-size="10" font-family="inherit">🔊</text>
   <rect x="65" y="328" width="240" height="10" rx="5" fill="rgba(255,255,255,0.05)"/>
   <rect x="65" y="328" width="140" height="10" rx="5" fill="rgba(46,204,113,0.3)"/>
   <circle cx="205" cy="333" r="6" fill="#2ecc71"/>
   <text x="315" y="336" fill="#8899aa" font-size="10" font-family="inherit">45</text>
 
-  <!-- Gain Sliders -->
   <text x="60" y="360" fill="#8899aa" font-size="9" font-family="inherit">AF</text>
   <rect x="78" y="354" width="70" height="6" rx="3" fill="rgba(255,255,255,0.05)"/>
   <rect x="78" y="354" width="42" height="6" rx="3" fill="rgba(93,173,226,0.4)"/>
@@ -373,7 +480,6 @@
 
   <line x1="31" y1="376" x2="329" y2="376" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
 
-  <!-- Mode + Filter -->
   <rect x="55" y="385" width="110" height="30" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
   <text x="75" y="405" fill="#5dade2" font-size="11" font-family="inherit">◀</text>
   <text x="110" y="405" text-anchor="middle" fill="#f39c12" font-size="12" font-weight="600" font-family="inherit">USB</text>
@@ -384,7 +490,6 @@
   <text x="250" y="405" text-anchor="middle" fill="#fff" font-size="12" font-weight="600" font-family="inherit">SSB</text>
   <text x="285" y="405" fill="#5dade2" font-size="11" font-family="inherit">▶</text>
 
-  <!-- Favorites Grid 3×3 -->
   <rect x="31" y="424" width="90" height="44" rx="6" fill="rgba(243,156,18,0.06)" stroke="rgba(243,156,18,0.15)" stroke-width="1"/>
   <text x="76" y="442" text-anchor="middle" fill="#f39c12" font-size="10" font-weight="600" font-family="inherit">20m</text>
   <text x="76" y="458" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="monospace">14.074</text>
@@ -397,7 +502,6 @@
   <text x="284" y="448" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
   <text x="284" y="462" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
 
-  <!-- Row 2 -->
   <rect x="31" y="474" width="90" height="44" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
   <text x="76" y="498" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
   <text x="76" y="512" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
@@ -410,7 +514,6 @@
   <text x="284" y="498" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
   <text x="284" y="512" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
 
-  <!-- Row 3 -->
   <rect x="31" y="524" width="90" height="44" rx="6" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
   <text x="76" y="548" text-anchor="middle" fill="#5c6370" font-size="11" font-family="inherit">---</text>
   <text x="76" y="562" text-anchor="middle" fill="#5c6370" font-size="10" font-family="monospace">--.---</text>
@@ -425,11 +528,9 @@
 
   <line x1="31" y1="578" x2="329" y2="578" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
 
-  <!-- PTT Button -->
   <rect x="115" y="588" width="130" height="52" rx="26" fill="rgba(231,76,60,0.15)" stroke="rgba(231,76,60,0.4)" stroke-width="2"/>
   <text x="180" y="620" text-anchor="middle" fill="#e74c3c" font-size="18" font-weight="800" font-family="inherit">TX</text>
 
-  <!-- Annotation lines -->
   <g opacity="0.4">
     <line x1="345" y1="57" x2="360" y2="57" stroke="#5c6370" stroke-width="0.5"/>
     <text x="340" y="52" fill="#5c6370" font-size="7" font-family="inherit" text-anchor="end">HeaderView</text>
@@ -446,72 +547,69 @@
         </div>
 
         <div class="screen-row">
-            <div class="screen-card">
-                <h4><i class="fas fa-satellite-dish"></i> Main RX Screen</h4>
+            <div class="scope-card scope-reveal">
+                <h4><i class="fas fa-satellite-dish" style="color:var(--scope-primary);margin-right:0.4rem;"></i> Main RX Screen</h4>
                 <p>Spectrum waterfall + S-meter + audio level + gain sliders + mode selection + favorites grid + PTT</p>
-                <div>
-                    <span class="comp">SMeterView</span><span class="comp">WaterfallView</span>
-                    <span class="comp">ModeSelector</span><span class="comp">FavoritesGrid</span>
-                    <span class="comp">PTTButton</span><span class="comp">GainSlider</span>
+                <div class="tech-stack" style="justify-content:flex-start;">
+                    <span class="tech-tag">SMeterView</span><span class="tech-tag">WaterfallView</span>
+                    <span class="tech-tag">ModeSelector</span><span class="tech-tag">FavoritesGrid</span>
+                    <span class="tech-tag">PTTButton</span><span class="tech-tag">GainSlider</span>
                 </div>
             </div>
-            <div class="screen-card">
-                <h4><i class="fas fa-wave-square"></i> DSP Panel</h4>
+            <div class="scope-card scope-reveal">
+                <h4><i class="fas fa-wave-square" style="color:var(--scope-primary);margin-right:0.4rem;"></i> DSP Panel</h4>
                 <p>WDSP master toggle, NR2 noise reduction (with level meter and intensity slider), NB/ANF/NF toggles, AGC mode selection, manual notch management</p>
-                <div>
-                    <span class="comp">NotchChartView</span><span class="comp">NR2 Card</span>
-                    <span class="comp">AGC ButtonGroup</span><span class="comp">Notch List</span>
+                <div class="tech-stack" style="justify-content:flex-start;">
+                    <span class="tech-tag">NotchChartView</span><span class="tech-tag">NR2 Card</span>
+                    <span class="tech-tag">AGC ButtonGroup</span><span class="tech-tag">Notch List</span>
                 </div>
             </div>
-            <div class="screen-card">
-                <h4><i class="fas fa-cog"></i> Settings</h4>
+            <div class="scope-card scope-reveal">
+                <h4><i class="fas fa-cog" style="color:var(--scope-primary);margin-right:0.4rem;"></i> Settings</h4>
                 <p>Quick-save, favorites management (swipe-delete), server config + reconnect, connection status diagnostics, IQ sample rate selector</p>
-                <div>
-                    <span class="comp">Quick Save</span><span class="comp">Favorites List</span>
-                    <span class="comp">Server Config</span><span class="comp">StatusLine</span>
+                <div class="tech-stack" style="justify-content:flex-start;">
+                    <span class="tech-tag">Quick Save</span><span class="tech-tag">Favorites List</span>
+                    <span class="tech-tag">Server Config</span><span class="tech-tag">StatusLine</span>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Performance -->
-<section class="section" id="performance" style="background: var(--bg-primary);">
+<section class="scope-section" id="performance">
     <div class="container">
-        <div class="section-header">
-            <span class="section-label">Performance</span>
-            <h2 class="section-title">Zero Main-Thread Burden</h2>
-            <p class="section-subtitle">All heavy computation runs on background threads, ensuring smooth 60fps scrolling.</p>
-        </div>
+        <div class="section-label">Performance</div>
+        <h2 class="section-title">Zero Main-Thread Burden</h2>
+        <p class="section-subtitle">All heavy computation runs on background threads, ensuring smooth 60fps scrolling.</p>
 
         <div class="perf-grid">
-            <div class="perf-card">
+            <div class="scope-card scope-reveal perf-card">
                 <div class="metric">50%</div>
                 <div class="metric-label">Frame Skip Rate<br><small>Halves dispatch overhead</small></div>
             </div>
-            <div class="perf-card">
+            <div class="scope-card scope-reveal perf-card">
                 <div class="metric">5×</div>
                 <div class="metric-label">Frame Accumulation<br><small>Reduces waterfall processing frequency</small></div>
             </div>
-            <div class="perf-card">
+            <div class="scope-card scope-reveal perf-card">
                 <div class="metric">10fps</div>
                 <div class="metric-label">Waterfall Frame Cap<br><small>UIImage update throttling</small></div>
             </div>
-            <div class="perf-card">
+            <div class="scope-card scope-reveal perf-card">
                 <div class="metric">200KB</div>
                 <div class="metric-label">Waterfall VRAM<br><small>512×100×4 pixel buffer</small></div>
             </div>
-            <div class="perf-card">
+            <div class="scope-card scope-reveal perf-card">
                 <div class="metric">4</div>
                 <div class="metric-label">Concurrent WebSockets<br><small>URLSessionWebSocketTask</small></div>
             </div>
-            <div class="perf-card">
+            <div class="scope-card scope-reveal perf-card">
                 <div class="metric">0</div>
                 <div class="metric-label">Third-Party Dependencies<br><small>Pure Apple frameworks</small></div>
             </div>
         </div>
 
-        <h3 style="text-align:center;color:var(--text-primary);margin-top:3rem;margin-bottom:1.5rem">Tech Stack</h3>
+        <h3 style="text-align:center;color:var(--scope-text);margin-top:3rem;margin-bottom:1.5rem;font-family:var(--scope-font-mono);">Tech Stack</h3>
         <div class="tech-stack">
             <span class="tech-tag">Swift 5.9</span>
             <span class="tech-tag">SwiftUI</span>
@@ -528,54 +626,46 @@
     </div>
 </section>
 
-<!-- Quick Start -->
-<section class="section" id="start" style="background: var(--bg-secondary);">
+<section class="scope-section scope-section-alt" id="start">
     <div class="container">
-        <div class="section-header">
-            <span class="section-label">Quick Start</span>
-            <h2 class="section-title">Up and Running in 5 Minutes</h2>
-            <p class="section-subtitle">Clone, generate the Xcode project, build, connect — just four steps.</p>
-        </div>
+        <div class="section-label">Quick Start</div>
+        <h2 class="section-title">Up and Running in 5 Minutes</h2>
+        <p class="section-subtitle">Clone, generate the Xcode project, build, connect — just four steps.</p>
 
-        <div class="steps">
-            <div class="step">
+        <div class="steps" style="counter-reset:step;">
+            <div class="scope-card scope-reveal step">
                 <h4>Clone the Repository</h4>
                 <p>Get the latest code from GitHub</p>
                 <code>git clone https://github.com/cheenle/SunsdrMobile.git</code>
             </div>
-            <div class="step">
+            <div class="scope-card scope-reveal step">
                 <h4>Generate Xcode Project</h4>
                 <p>Use XcodeGen to generate .xcodeproj from project.yml</p>
                 <code>cd SunsdrMobile && xcodegen generate</code>
             </div>
-            <div class="step">
+            <div class="scope-card scope-reveal step">
                 <h4>Build &amp; Run</h4>
                 <p>Open the project in Xcode, select your iPhone, and press Cmd+R</p>
                 <code>open SunsdrMobile.xcodeproj</code>
             </div>
-            <div class="step">
+            <div class="scope-card scope-reveal step">
                 <h4>Connect to Your Radio</h4>
                 <p>Enter your server address and password — auto-login via Keychain establishes all 4 WebSocket connections</p>
                 <code>radio.vlsc.net:8889 → Keychain</code>
             </div>
         </div>
 
-        <div style="text-align:center;margin-top:3rem">
-            <a href="https://github.com/cheenle/SunsdrMobile" class="btn btn-primary btn-large" target="_blank" rel="noopener">
-                <i class="fab fa-github"></i> View on GitHub
-            </a>
+        <div style="text-align:center;margin-top:3rem;">
+            <a href="https://github.com/cheenle/SunsdrMobile" class="scope-btn scope-btn-primary" target="_blank" rel="noopener"><i class="fab fa-github"></i> View on GitHub</a>
         </div>
     </div>
 </section>
 
-<!-- Requirements -->
-<section class="section" id="requirements" style="background: var(--bg-primary);">
-    <div class="container" style="text-align:center">
-        <div class="section-header">
-            <span class="section-label">Requirements</span>
-            <h2 class="section-title">Runtime Environment</h2>
-        </div>
-        <div class="tech-stack" style="margin-bottom:0">
+<section class="scope-section" id="requirements">
+    <div class="container" style="text-align:center;">
+        <div class="section-label">Requirements</div>
+        <h2 class="section-title">Runtime Environment</h2>
+        <div class="tech-stack" style="margin-bottom:0;">
             <span class="tech-tag"><i class="fas fa-mobile-alt"></i> iOS 17.0+</span>
             <span class="tech-tag"><i class="fas fa-tools"></i> Xcode 15.0+</span>
             <span class="tech-tag"><i class="fas fa-code"></i> Swift 5.9</span>
@@ -583,23 +673,18 @@
             <span class="tech-tag"><i class="fas fa-server"></i> sunmrrc v3.4+</span>
             <span class="tech-tag"><i class="fas fa-shield-alt"></i> Self-Signed TLS Cert</span>
         </div>
-        <p style="color:var(--text-muted);margin-top:1.5rem;font-size:0.85rem">The simulator lacks full AVAudioEngine microphone support — a physical iPhone device is required</p>
+        <p style="color:var(--scope-text-muted);margin-top:1.5rem;font-size:0.85rem;">The simulator lacks full AVAudioEngine microphone support — a physical iPhone device is required</p>
     </div>
 </section>
 
-<!-- Footer -->
-<footer class="footer">
+<footer class="scope-footer">
     <div class="container">
-        <div class="footer-grid">
-            <div class="footer-section">
+        <div class="scope-footer-grid">
+            <div>
                 <h4>SunsdrMobile</h4>
-                <p>
-                    Native iOS App for SunSDR2 DX<br>
-                    Your SunSDR2 DX, in Your Pocket<br>
-                    v1.0 · MIT License
-                </p>
+                <p>Native iOS App for SunSDR2 DX<br>Your SunSDR2 DX, in Your Pocket<br>v1.0 · MIT License</p>
             </div>
-            <div class="footer-section">
+            <div>
                 <h4>Links</h4>
                 <ul>
                     <li><a href="#">Home</a></li>
@@ -608,7 +693,7 @@
                     <li><a href="#start">Quick Start</a></li>
                 </ul>
             </div>
-            <div class="footer-section">
+            <div>
                 <h4>Resources</h4>
                 <ul>
                     <li><a href="https://github.com/cheenle/SunsdrMobile" target="_blank" rel="noopener">GitHub</a></li>
@@ -617,30 +702,19 @@
                     <li><a href="https://github.com/cheenle/SunsdrMobile/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a></li>
                 </ul>
             </div>
+            <div>
+                <h4>Language</h4>
+                <ul>
+                    <li><a href="zh/index.html">中文</a></li>
+                </ul>
+            </div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 SunsdrMobile Project. Open Source under MIT License. · SunSDR2 DX is a product of <a href="https://eesdr.com/" style="color:var(--accent);">Expert Electronics</a>.</p>
-            <p class="built">🤖 Built with Claude Code</p>
+        <div class="scope-footer-bottom">
+            <p>&copy; 2026 SunsdrMobile Project. Open Source under MIT License. · SunSDR2 DX is a product of <a href="https://eesdr.com/">Expert Electronics</a>.</p>
         </div>
     </div>
 </footer>
 
-<script>
-function toggleMobileMenu() {
-    document.querySelector('.nav-links').classList.toggle('active');
-}
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', function(e) {
-        e.preventDefault();
-        const t = document.querySelector(this.getAttribute('href'));
-        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-});
-const nav = document.querySelector('.navbar');
-window.addEventListener('scroll', () => {
-    nav.style.background = window.scrollY > 50 ? 'rgba(10,14,20,0.98)' : 'rgba(10,14,20,0.92)';
-});
-</script>
-    <script src="js/global-nav.js?v=2" defer data-gn="1"></script>
+<script src="js/scope.js?v=1" defer></script>
 </body>
 </html>
