@@ -4,6 +4,19 @@
 
 set -e
 
+# ── Archive guard ──────────────────────────────────────────────────────────
+# Merged 2026-09-12 into SunMRRC as its native iOS client. The page now lives
+# at /sunmrrc/ios/ and /sunsdrmobile/ 301-redirects there; the server directory
+# has been removed and this repository is archived read-only.
+echo "This project is archived (2026-09-12) and merged into SunMRRC."
+echo "  Successor repo: https://github.com/cheenle/sunsdr  (SunsdrMobile/)"
+echo "  Live page:      https://www.vlsc.net/sunmrrc/ios/"
+echo ""
+echo "Deployment is disabled. The page now ships with the sunmrrc site."
+exit 1
+# ──────────────────────────────────────────────────────────────────────────
+
+
 # Configuration
 LOCAL_WEBSITE_DIR="/Users/cheenle/HAM/sunsdr/SunsdrMobile/website"
 REMOTE_HOST="www.vlsc.net"
@@ -107,7 +120,6 @@ scp "$DEPLOY_PACKAGE" "$REMOTE_USER@$REMOTE_HOST:/tmp/"
 # Extract on remote server
 ssh "$REMOTE_USER@$REMOTE_HOST" << EOF
     set -e
-
     echo "Extracting files..."
     cd "$REMOTE_WEBROOT"
     sudo tar -xzf "$DEPLOY_PACKAGE" --overwrite

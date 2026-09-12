@@ -1,3 +1,10 @@
+> **⚠️ Archived 2026-09-12 — merged into [SunMRRC](https://github.com/cheenle/sunsdr) as its native iOS client.**
+>
+> The app now lives at [`SunsdrMobile/`](https://github.com/cheenle/sunsdr/tree/main/SunsdrMobile)
+> in the SunMRRC repository, with its full commit history imported. This repository is
+> read-only; its website (<https://www.vlsc.net/sunsdrmobile/>) 301-redirects to
+> <https://www.vlsc.net/sunmrrc/ios/>. See [ARCHIVED.md](ARCHIVED.md).
+
 # SunsdrMobile
 
 **Native iOS app for SunSDR2 DX amateur radio transceiver control.**
